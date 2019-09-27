@@ -21,6 +21,8 @@ user_agent="User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X)"
 weather_data0=`curl -H "$user_agent" --silent ${weather_url/weather-forecast/hourly-weather-forecast}`
 weather_data1=`curl -H "$user_agent" --silent ${weather_url/weather-forecast/hourly-weather-forecast}"?day=1"`
 hour_data=$(echo "$weather_data0" "$weather_data1" | grep 'hourlyForecast' | tr '{|}' '\n' | grep 'localTime' | sed -n $(expr 1 + $later),$(expr $hour + $later)p)
+locale_data=$(echo "$weather_data0" | grep -e 'pageLocale' |  tr '{|}' '\n' | sed s/',"'/\\$'\n'/g | tr -d '"')
+locale_precip=$(echo "$locale_data" | grep -m1 'precip:' | awk -F: '{print $2}')
 
 # 指定された時間分の時刻を取得（後で配列変数として使う。以下同様）
 _IFS="$IFS";IFS="
@@ -28,9 +30,11 @@ _IFS="$IFS";IFS="
 current_time=(`echo "$hour_data" | awk -F'"localTime":' '{print $2}' | cut -d"\"" -f2 | cut -d"\"" -f1`) 
 IFS="$_IFS"
 
-# 指定された時間分の天気を取得
+# 指定された時間分のデータを取得
 _IFS="$IFS";IFS="
 "
+current_temp=(`echo "$hour_data" | awk -F'"temp":' '{print $2}' | cut -d"\"" -f2 | cut -d"\"" -f1`) 
+current_precip=(`echo "$hour_data" | awk -F'"precip":' '{print $2}' | cut -d"\"" -f2 | cut -d"\"" -f1`) 
 current_weather=(`echo "$hour_data" | awk -F'"phrase":' '{print $2}' | cut -d"\"" -f2 | cut -d"\"" -f1`) 
 IFS="$_IFS"
 
@@ -44,6 +48,6 @@ printf "%5s  " "${current_time[$i]}" | sed -E 's/AM|पूर्वाह्न|
 else
 printf "%5s  " "${current_time[$i]}" | perl -pe 's/((?<![0-9])([0-9])(?![0-9])|0[0-9]|1[0-1])/\1'`printf "\033[0;${AM_COLOR}m"`'/' | sed -E 's/(1[2-9]|2[0-3])/&'`printf "\033[0;${PM_COLOR}m"`'/' | sed -E 's/$/'`printf "\033[0m"`'/' | tr -d '\n'
 fi
-echo "${current_weather[$i]}"
+echo "${current_temp[$i]} ${locale_precip}:$(printf "%4s" "${current_precip[$i]}")  ${current_weather[$i]}"
 done
 IFS="$_IFS"
