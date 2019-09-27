@@ -30,7 +30,7 @@ mc_data=$(echo "$weather_data_mc" | grep 'minuteCastSummary' | tr '{|}' '\n' | s
 echo "$(echo "$cur_data" | grep 'temp' | awk -F: '{print $2}') $(echo "$cur_data" | grep 'phrase' | awk -F: '{print $2}')"
 
 # MINUTECASTを取得して表示
-if [ $(echo "$mc_data" | grep 'typeId' | awk -F: '{print $2}') -ne 1 ];then
+if [ $(echo "$mc_data" | grep 'typeId' | awk -F: '{print $2}') -ne 0 ];then
 echo "$mc_data" | grep 'phrase' | awk -F: '{print $2}'
 fi
 
