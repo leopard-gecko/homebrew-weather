@@ -31,7 +31,7 @@ week_data[$i]=$(echo "$weather_data" | grep 'dailyForecast' | tr '{|}' '\n' | gr
 done
 locale_data=$(echo "$weather_data" | grep -e 'pageLocale' |  tr '{|}' '\n' | sed s/',"'/\\$'\n'/g | tr -d '"')
 
-# 日付、曜日、最高・最低気温、天気を表示
+# 日付、曜日、最高・最低気温、降水確率、天気を表示
 for (( i = 0; i < $days; ++i ))
 do
 hi[$i]=`echo "${week_data[$i]}" | grep -A1 'day:' | grep 'dTemp' | awk -F: '{print $2}'`
