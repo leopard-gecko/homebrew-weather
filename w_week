@@ -1,19 +1,15 @@
 #!/bin/sh
-# 週間天気のスクリプト
+# 週間天気予報のスクリプト
 
 # 場所のURL （日本語表記にしたい場合は/en/を/ja/に書き換える）
 weather_url="https://www.accuweather.com/en/jp/koto-ku/221230/weather-forecast/221230"
 
-# 何日後から？
-later=1
 # 何日間？
 days=7
 [ $# -ne 0 ] && days=$1
-
-# 日付を表示する？（1 表示する、0 表示しない）
-date_b=1
-# 曜日を表示する？（1 表示する、0 表示しない）
-dow=1
+# 何日後から？
+later=1
+[ $# -eq 2 ] && later=$2
 
 # 天気の詳細（phrase 簡略表示、longPhrase 詳細表示）
 detail=phrase
@@ -21,6 +17,11 @@ detail=phrase
 # 土曜日と日曜日の色 （30 黒、31 赤、32 緑、33 黄、34 青、35 マゼンタ、36 シアン、37 白、0 デフォルト）
 SAT_COLOR=34
 SUN_COLOR=31
+
+# 日付を表示する？（1 表示する、0 表示しない）
+date_b=1
+# 曜日を表示する？（1 表示する、0 表示しない）
+dow=1
 
 # 元データ取得
 weather_data=`curl -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X)' --silent $weather_url`
