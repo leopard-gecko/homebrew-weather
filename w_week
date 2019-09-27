@@ -24,11 +24,12 @@ date_b=1
 dow=1
 
 # 元データ取得
-weather_data=`curl -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X)' --silent $weather_url`
+weather_data=`curl -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X)' --silent ${weather_url/weather-forecast/daily-weather-forecast}`
 for (( i = 0; i < $days; ++i ))
 do
 week_data[$i]=$(echo "$weather_data" | grep 'dailyForecast' | tr '{|}' '\n' | grep -A3 $(date -v+$(($later+$i))d '+%Y-%m-%d') | sed s/',"'/\\$'\n'/g | tr -d '"')
 done
+locale_data=$(echo "$weather_data" | grep -e 'pageLocale' |  tr '{|}' '\n' | sed s/',"'/\\$'\n'/g | tr -d '"')
 
 # 日付、曜日、最高・最低気温、天気を表示
 for (( i = 0; i < $days; ++i ))
@@ -37,6 +38,6 @@ hi[$i]=`echo "${week_data[$i]}" | grep -A1 'day:' | grep 'dTemp' | awk -F: '{pri
 lo[$i]=`echo "${week_data[$i]}" | grep -A1 'night:' | grep 'dTemp' | awk -F: '{print $2}'`
 [ $date_b -eq 1 ] && printf "%5s " "$(echo "${week_data[$i]}" | grep 'date:' | awk -F: '{print $2}')"
 [ $dow -eq 1 ] && printf "($(echo "${week_data[$i]}" | grep -m1 'dow:' | awk -F: '{print $2}' | sed -E s/Sat\|土/`printf "\033[0;${SAT_COLOR}m"`\&/ | sed -E s/Sun\|日/`printf "\033[0;${SUN_COLOR}m"`\&/ | sed -E 's/$/'`printf "\033[0m"`'/')) "
-printf "%3s/%3s  " ${hi[$i]} ${lo[$i]}
-echo "${week_data[$i]}" | grep -m1 "$detail" | awk -F: '{print $2}'
+printf "%5s/%5s " ${hi[$i]} ${lo[$i]}
+echo "$(echo "$locale_data" | grep -m1 'precip:' | awk -F: '{print $2}'):$(echo "${week_data[$i]}" | grep -m1 'precip' | awk -F: '{printf "%4s",$2}')  $(echo "${week_data[$i]}" | grep -m1 "$detail" | awk -F: '{print $2}')"
 done
