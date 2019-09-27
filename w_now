@@ -18,7 +18,6 @@ if [ $humidity -eq 1 ];    then hu='\|humidity:'; else hu=''; fi
 if [ $pressure -eq 1 ];    then pr='\|pressure:'; else pr=''; fi
 if [ $wind -eq 1 ];        then wi='\|wind:';     else wi=''; fi
 
-
 # 元データ取得
 weather_data=`curl -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X)' --silent ${weather_url/weather-forecast/current-weather}`
 cur_data=$(echo "$weather_data" | grep 'curCon' | tr '{|}' '\n' | sed s/',"'/\\$'\n'/g | tr -d '"')
