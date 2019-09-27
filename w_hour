@@ -46,4 +46,3 @@ fi
 echo "${current_weather[$i]}"
 done
 IFS="$_IFS"
-
