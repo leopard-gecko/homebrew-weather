@@ -2,7 +2,7 @@
 # 現在の天気のスクリプト
 
 # 場所のURL（日本語表記にしたい場合は/en/を/ja/に書き換える）
-weather_url="https://www.accuweather.com/ja/jp/koto-ku/221230/weather-forecast/221230"
+weather_url="https://www.accuweather.com/en/jp/koto-ku/221230/weather-forecast/221230"
 
 # 取得したいデータ（0 取得しない、1 取得する）
 uv_index=1      #紫外線
