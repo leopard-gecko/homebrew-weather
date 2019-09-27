@@ -24,7 +24,8 @@ date_b=1
 dow=1
 
 # 元データ取得
-weather_data=`curl -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X)' --silent ${weather_url/weather-forecast/daily-weather-forecast}`
+user_agent="User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X)"
+weather_data=`curl -H "$user_agent" --silent ${weather_url/weather-forecast/daily-weather-forecast}`
 for (( i = 0; i < $days; ++i ))
 do
 week_data[$i]=$(echo "$weather_data" | grep 'dailyForecast' | tr '{|}' '\n' | grep -A3 $(date -v+$(($later+$i))d '+%Y-%m-%d') | sed s/',"'/\\$'\n'/g | tr -d '"')
