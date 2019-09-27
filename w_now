@@ -2,7 +2,7 @@
 # 現在の天気のスクリプト
 
 # 場所のURL（日本語表記にしたい場合は/en/を/ja/に書き換える）
-weather_url="https://www.accuweather.com/en/jp/koto-ku/221230/weather-forecast/221230"
+weather_url="https://www.accuweather.com/ja/jp/koto-ku/221230/weather-forecast/221230"
 
 # 取得したいデータ（0 取得しない、1 取得する）
 uv_index=1      #紫外線
@@ -24,10 +24,19 @@ weather_data=`curl -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X)' --si
 cur_data=$(echo "$weather_data" | grep 'curCon' | tr '{|}' '\n' | sed s/',"'/\\$'\n'/g | tr -d '"')
 locale_data=$(echo "$weather_data" | grep -e 'pageLocale' |  tr '{|}' '\n' | sed s/',"'/\\$'\n'/g | tr -d '"')
 
+weather_data_mc=`curl -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X)' --silent $weather_url`
+mc_data=$(echo "$weather_data_mc" | grep 'minuteCastSummary' | tr '{|}' '\n' | sed s/',"'/\\$'\n'/g | tr -d '"')
+
 # 現在の温度と天気を取得して表示
 echo "$(echo "$cur_data" | grep 'temp' | awk -F: '{print $2}') $(echo "$cur_data" | grep 'phrase' | awk -F: '{print $2}')"
 
+# MINUTECASTを取得して表示
+if [ $(echo "$mc_data" | grep 'typeId' | awk -F: '{print $2}') -ne 1 ];then
+echo "$mc_data" | grep 'phrase' | awk -F: '{print $2}'
+fi
+
 # 現在の紫外線、雲量、湿度、風速・風向き、時刻を取得して表示
+if [ $# -eq 0 ]; then
 echo "$cur_data" | grep -A2 $(echo $ui) | tr '\n' ':' | awk -F: -v uvi="$(echo "$locale_data" | grep 'uv:' | awk -F: '{print $2}')" '{print uvi": "$6,"("$4")"}'
-echo "$cur_data" | grep ''$(echo $cc)$(echo $hu)$(echo $pr)$(echo $wi)'' | sed -e s/cc:/"$(echo "$locale_data" | grep -m1 'cloudCover:' | awk -F: '{print $2}'): "/g -e s/humidity:/"$(echo "$locale_data" | grep -m1 'humidity:' | awk -F: '{print $2}'): "/g -e s/pressure:/"$(echo "$locale_data" | grep -m1 'pressure:' | awk -F: '{print $2}'): "/g -e s/wind:/"$(echo "$locale_data" | grep -m1 'wind:' | awk -F: '{print $2}'): "/g | sed s/"`printf '\t'`"/'    '/g
-echo "$cur_data" | grep 'now' | awk -F'now:' '{print $2}'
+echo "$cur_data" | grep ''$(echo $cc)$(echo $hu)$(echo $pr)$(echo $wi)'' | sed -e s/cc:/"$(echo "$locale_data" | grep -m1 'cloudCover:' | awk -F: '{print $2}'): "/g -e s/humidity:/"$(echo "$locale_data" | grep -m1 'humidity:' | awk -F: '{print $2}'): "/g -e s/pressure:/"$(echo "$locale_data" | grep -m1 'pressure:' | awk -F: '{print $2}'): "/g -e s/wind:/"$(echo "$locale_data" | grep -m1 'wind:' | awk -F: '{print $2}'): "/g
+fi
