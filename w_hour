@@ -2,7 +2,7 @@
 # 時間単位天気予報のスクリプト(色付き、多国語対応)
 
 # 場所のURL（日本語表記にしたい場合は/en/を/ja/に書き換える）
-WEATHER_URL=${WEATHER_URL:=https://www.accuweather.com/en/jp/koto-ku/221230/weather-forecast/221230}
+WEATHER_URL=${WEATHER_URL:='https://www.accuweather.com/en/jp/koto-ku/221230/weather-forecast/221230'}
 
 # 何時間分？
 NUM_L=24
@@ -39,14 +39,14 @@ exit 1
 # 引数の設定
 while getopts n:a:s:hl: OPT
 do
-    case $OPT in
+  case $OPT in
     n) NUM_L="$OPTARG" ;;
     a) AFTER="$OPTARG" ;;
     s) SKIP="$OPTARG" ;;
-    h) usage ;;
+    h) usage; exit 1 ;;
     l) WEATHER_URL=${WEATHER_URL/\/en\//\/"$OPTARG"\/} ;;
-    *) usage ;;
-    esac
+    *) usage; exit 1 ;;
+  esac
 done
 
 # 元データ取得
@@ -60,16 +60,16 @@ LOCAL_PRECIP=$(echo "$DATA_LOCALE" | grep -m1 'precip:' | awk -F: '{print $2}')
 # 指定された時間分の時刻を取得（後で配列変数として使う。以下同様）
 _IFS="$IFS";IFS="
 "
-CURRENT_TIME=($(echo "$DATA_HOUR" | awk -F'"localTime":' '{print $2}' | cut -d"\"" -f2 | cut -d"\"" -f1)) 
-CURRENT_DATE=($(echo "$DATA_HOUR" | awk -F'"localDate":' '{print $2}' | cut -d"\"" -f2 | cut -d"\"" -f1)) 
+CURRENT_TIME=($(echo "$DATA_HOUR" | awk -F'"localTime":' '{print $2}' | cut -d"\"" -f2 | cut -d"\"" -f1))
+CURRENT_DATE=($(echo "$DATA_HOUR" | awk -F'"localDate":' '{print $2}' | cut -d"\"" -f2 | cut -d"\"" -f1))
 IFS="$_IFS"
 
 # 指定された時間分のデータを取得
 _IFS="$IFS";IFS="
 "
-CURRENT_TEMP=($(echo "$DATA_HOUR" | awk -F'"temp":' '{print $2}' | cut -d"\"" -f2 | cut -d"\"" -f1)) 
-CURRENT_PRECIP=($(echo "$DATA_HOUR" | awk -F'"precip":' '{print $2}' | cut -d"\"" -f2 | cut -d"\"" -f1)) 
-CURRENT_WEATHER=($(echo "$DATA_HOUR" | awk -F'"phrase":' '{print $2}' | cut -d"\"" -f2 | cut -d"\"" -f1)) 
+CURRENT_TEMP=($(echo "$DATA_HOUR" | awk -F'"temp":' '{print $2}' | cut -d"\"" -f2 | cut -d"\"" -f1))
+CURRENT_PRECIP=($(echo "$DATA_HOUR" | awk -F'"precip":' '{print $2}' | cut -d"\"" -f2 | cut -d"\"" -f1))
+CURRENT_WEATHER=($(echo "$DATA_HOUR" | awk -F'"phrase":' '{print $2}' | cut -d"\"" -f2 | cut -d"\"" -f1))
 IFS="$_IFS"
 
 # 時刻と天気を表示
@@ -77,12 +77,12 @@ _IFS="$IFS";IFS="
 "
 for i in $(seq 0 $SKIP $((${#CURRENT_TIME[@]}-1)))
 do
-printf "%5s " "${CURRENT_DATE[$i]}"
-if [ "$(echo $WEATHER_URL | grep '/hi/\|/ar/\|/el/\|/ko/\|/ms/\|/bn/\|/ur/\|/kn/\|/te/\|/mr/\|/pa/\|/zh\|/en/')" ]; then
-printf "%5s  " "${CURRENT_TIME[$i]}" | sed -E 's/AM|पूर्वाह्न|π.μ.|오전|PG|পূর্বাহ্|ಪೂರ್ವಾಹ್ನ|म.पू.|ਪੂ.ਦੁ.|上午|ص|قبل دوپہر/'$(printf "\033[0;${AM_COLOR}m")'&'$(printf "\033[0m")'/' | sed -E 's/PM|अपराह्|μ.μ.|오후|PTG|অপরাহ্ণ|ಅಪರಾಹ್ನ|PM|म.उ.|ਬਾ.ਦੁ.|下午|م|بعد دوپہر/'$(printf "\033[0;${PM_COLOR}m")'&'$(printf "\033[0m")'/' | tr -d '\n'
-else
-printf "%5s  " "${CURRENT_TIME[$i]}" | perl -pe 's/((?<![0-9])([0-9])(?![0-9])|0[0-9]|1[0-1])/\1'$(printf "\033[0;${AM_COLOR}m")'/' | sed -E 's/(1[2-9]|2[0-3])/&'$(printf "\033[0;${PM_COLOR}m")'/' | sed -E 's/$/'$(printf "\033[0m")'/' | tr -d '\n'
-fi
-echo "${CURRENT_TEMP[$i]} ${LOCAL_PRECIP}:$(printf "%4s" "${CURRENT_PRECIP[$i]}")  ${CURRENT_WEATHER[$i]}"
+  printf "%5s " "${CURRENT_DATE[$i]}"
+  if [ "$(echo $WEATHER_URL | grep '/hi/\|/ar/\|/el/\|/ko/\|/ms/\|/bn/\|/ur/\|/kn/\|/te/\|/mr/\|/pa/\|/zh\|/en/')" ]; then
+      printf "%5s  " "${CURRENT_TIME[$i]}" | sed -E 's/AM|पूर्वाह्न|π.μ.|오전|PG|পূর্বাহ্|ಪೂರ್ವಾಹ್ನ|म.पू.|ਪੂ.ਦੁ.|上午|ص|قبل دوپہر/'$(printf "\033[0;${AM_COLOR}m")'&'$(printf "\033[0m")'/' | sed -E 's/PM|अपराह्|μ.μ.|오후|PTG|অপরাহ্ণ|ಅಪರಾಹ್ನ|PM|म.उ.|ਬਾ.ਦੁ.|下午|م|بعد دوپہر/'$(printf "\033[0;${PM_COLOR}m")'&'$(printf "\033[0m")'/' | tr -d '\n'
+  else
+      printf "%5s  " "${CURRENT_TIME[$i]}" | perl -pe 's/((?<![0-9])([0-9])(?![0-9])|0[0-9]|1[0-1])/\1'$(printf "\033[0;${AM_COLOR}m")'/' | sed -E 's/(1[2-9]|2[0-3])/&'$(printf "\033[0;${PM_COLOR}m")'/' | sed -E 's/$/'$(printf "\033[0m")'/' | tr -d '\n'
+  fi
+  echo "${CURRENT_TEMP[$i]} ${LOCAL_PRECIP}:$(printf "%4s" "${CURRENT_PRECIP[$i]}")  ${CURRENT_WEATHER[$i]}"
 done
 IFS="$_IFS"
