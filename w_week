@@ -2,7 +2,7 @@
 # 週間天気予報のスクリプト
 
 # 場所のURL （日本語表記にしたい場合は/en/を/ja/に書き換える）
-WEATHER_URL=${WEATHER_URL:=https://www.accuweather.com/en/jp/koto-ku/221230/weather-forecast/221230}
+WEATHER_URL=${WEATHER_URL:='https://www.accuweather.com/en/jp/koto-ku/221230/weather-forecast/221230'}
 
 # 何日間？
 NUM_L=7
@@ -63,7 +63,7 @@ user_agent='User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X)'
 weather_data=$(curl -H "$user_agent" --silent ${WEATHER_URL})
 for (( i = 0; i < $NUM_L; ++i ))
 do
-week_data[$i]=$(echo "$weather_data" | grep 'dailyForecast' | tr '{|}' '\n' | grep -A3 $(date -v+$(($AFTER+$i))d '+%Y-%m-%d') | perl -pe 's/,"/\n/g' | tr -d '"')
+  week_data[$i]=$(echo "$weather_data" | grep 'dailyForecast' | tr '{|}' '\n' | grep -A3 $(date -v+$(($AFTER+$i))d '+%Y-%m-%d') | perl -pe 's/,"/\n/g' | tr -d '"')
 done
 locale_data=$(curl -H "$user_agent" --silent ${WEATHER_URL/weather-forecast/daily-weather-forecast} | grep -e 'pageLocale' |  tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"')
 locale_precip=$(echo "$locale_data" | grep -m1 'precip:' | awk -F: '{print $2}')
@@ -73,10 +73,10 @@ locale_sun=$(echo "$weather_data" | grep 'dailyForecast' | tr '{|}' '\n' | grep 
 # 日付、曜日、最高・最低気温、降水確率、天気を表示
 for (( i = 0; i < $NUM_L; ++i ))
 do
-hi[$i]=$(echo "${week_data[$i]}" | grep -A1 'day:' | grep 'dTemp' | awk -F: '{print $2}')
-lo[$i]=$(echo "${week_data[$i]}" | grep -A1 'night:' | grep 'dTemp' | awk -F: '{print $2}')
-[ $DATE_B -eq 1 ] && printf "%5s " "$(echo "${week_data[$i]}" | grep 'date:' | awk -F: '{print $2}')"
-[[ $DOW =~ 1|2 ]] && printf "($(echo "${week_data[$i]}" | grep -m1 $MYDOW | awk -F: '{print $2}' | sed -E s/$locale_sat/$(printf "\033[0;${SAT_COLOR}m")\&/ | sed -E s/$locale_sun/$(printf "\033[0;${SUN_COLOR}m")\&/ | sed -E 's/$/'$(printf "\033[0m")'/')) "
-printf "%5s/%5s " ${hi[$i]} ${lo[$i]}
-echo "${locale_precip}:$(echo "${week_data[$i]}" | grep -m1 'precip' | awk -F: '{printf "%4s",$2}')  $(echo "${week_data[$i]}" | grep -m1 "$DETAIL" | awk -F: '{print $2}')"
+  hi[$i]=$(echo "${week_data[$i]}" | grep -A1 'day:' | grep 'dTemp' | awk -F: '{print $2}')
+  lo[$i]=$(echo "${week_data[$i]}" | grep -A1 'night:' | grep 'dTemp' | awk -F: '{print $2}')
+  [ $DATE_B -eq 1 ] && printf "%5s " "$(echo "${week_data[$i]}" | grep 'date:' | awk -F: '{print $2}')"
+  [[ $DOW =~ 1|2 ]] && printf "($(echo "${week_data[$i]}" | grep -m1 $MYDOW | awk -F: '{print $2}' | sed -E s/$locale_sat/$(printf "\033[0;${SAT_COLOR}m")\&/ | sed -E s/$locale_sun/$(printf "\033[0;${SUN_COLOR}m")\&/ | sed -E 's/$/'$(printf "\033[0m")'/')) "
+  printf "%5s/%5s " ${hi[$i]} ${lo[$i]}
+  echo "${locale_precip}:$(echo "${week_data[$i]}" | grep -m1 'precip' | awk -F: '{printf "%4s",$2}')  $(echo "${week_data[$i]}" | grep -m1 "$DETAIL" | awk -F: '{print $2}')"
 done
