@@ -43,9 +43,9 @@ do
     d) FLG_D='true' ;;
     n) FLG_N='true' ;;
     t) FLG_T='true' ;;
-    h) usage; exit 1 ;;
+    h) usage ;;
     l) WEATHER_URL=${WEATHER_URL/\/en\//\/"$OPTARG"\/} ;;
-    *) usage; exit 1 ;;
+    *) usage ;;
     esac
 done
 
