@@ -1,41 +1,107 @@
-#!/bin/sh
+#!/bin/bash
 # 現在の天気のスクリプト
 
 # 場所のURL（日本語表記にしたい場合は/en/を/ja/に書き換える）
-weather_url="https://www.accuweather.com/en/jp/koto-ku/221230/weather-forecast/221230"
+WEATHER_URL="https://www.accuweather.com/en/jp/koto-ku/221230/weather-forecast/221230"
 
-# 取得したいデータ（0 取得しない、1 取得する）
-uv_index=1      #紫外線
-cloud_cover=1   #雲量
-humidity=1      #湿度
-pressure=1      #気圧
-wind=1          #風速・風向き
+# 120分間天気に変化がない時のMINUTECASTの表示（0 変化がなければ表示しない、1 常に表示する）
+MC_SHOW=0
 
-# 取得するデータの整理
-if [ $uv_index -eq 1 ];    then ui='uv:';         else ui='Dummy'; fi
-if [ $cloud_cover -eq 1 ]; then cc='cc:';         else cc='Dummy'; fi
-if [ $humidity -eq 1 ];    then hu='\|humidity:'; else hu=''; fi
-if [ $pressure -eq 1 ];    then pr='\|pressure:'; else pr=''; fi
-if [ $wind -eq 1 ];        then wi='\|wind:';     else wi=''; fi
+# 見出し、天気、その他データの色  30 黒、31 赤、32 緑、33 黄、34 青、35 マゼンタ、36 シアン、37 白、0 デフォルト、1 強調、2 弱強調、4 下線、5 点滅、7 反転
+CP_COLOR='4;1'
+WE_COLOR='0'
 
-# 元データ取得
-user_agent="User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X)"
-weather_data_cur=`curl -H "$user_agent" --silent ${weather_url/weather-forecast/current-weather}`
-weather_data_mc=`curl -H "$user_agent" --silent $weather_url`
-cur_data=$(echo "$weather_data_cur" | grep 'curCon' | tr '{|}' '\n' | sed s/',"'/\\$'\n'/g | tr -d '"')
-locale_data=$(echo "$weather_data_cur" | grep -e 'pageLocale' |  tr '{|}' '\n' | sed s/',"'/\\$'\n'/g | tr -d '"')
-mc_data=$(echo "$weather_data_mc" | grep 'minuteCastSummary' | tr '{|}' '\n' | sed s/',"'/\\$'\n'/g | tr -d '"')
+# 使い方
+function usage() {
+cat <<_EOT_
+使い方:
+  ${0##*/} [-s | -c | -d | -n | -t | -h] [-l 言語]
 
-# 現在の温度と天気を取得して表示
-echo "$(echo "$cur_data" | grep 'temp' | awk -F: '{print $2}') $(echo "$cur_data" | grep 'phrase' | awk -F: '{print $2}')"
+説明:
+  現在の天気予報
 
-# MINUTECASTを取得して表示（120分間天気に変化がなければ表示しない）
-if [ $(echo "$mc_data" | grep 'typeId' | awk -F: '{print $2}') -ne 0 ];then
-echo "$mc_data" | grep 'phrase' | awk -F: '{print $2}'
+オプション:
+  -s    天気と降水確率のみ表示 （Simple）
+  -c    現在の天気を表示       （Current）
+  -d    日中の天気を表示       （Day）
+  -n    夜間の天気を表示       （Night）
+  -t    明日の天気を表示       （Tomorrow）
+  -h    ヘルプ
+  -l    表示言語
+        （ja:日本語、en:English、fr:Français、de:Deutsch、zh-cn:中文 (SIM)など）
+
+_EOT_
+exit 1
+}
+
+# 引数の設定
+while getopts scdnthl: OPT
+do
+    case $OPT in
+    s) FLG_S='true' ;;
+    c) FLG_C='true' ;;
+    d) FLG_D='true' ;;
+    n) FLG_N='true' ;;
+    t) FLG_T='true' ;;
+    h) usage; exit 1 ;;
+    l) WEATHER_URL=${WEATHER_URL/\/en\//\/"$OPTARG"\/} ;;
+    *) usage; exit 1 ;;
+    esac
+done
+
+if [ "$FLG_C" != 'true' ] && [ "$FLG_D" != 'true' ] && [ "$FLG_N" != 'true' ] && [ "$FLG_T" != 'true' ]; then
+    FLG_C='true'; FLG_D='true'; FLG_N='true'; FLG_T='true'
 fi
 
-# 現在の紫外線、雲量、湿度、風速・風向き、時刻を取得して表示
-if [ $# -eq 0 ]; then
-echo "$cur_data" | grep -A2 $(echo $ui) | tr '\n' ':' | awk -F: -v uvi="$(echo "$locale_data" | grep 'uv:' | awk -F: '{print $2}')" '{print uvi": "$6,"("$4")"}'
-echo "$cur_data" | grep ''$(echo $cc)$(echo $hu)$(echo $pr)$(echo $wi)'' | sed -e s/cc:/"$(echo "$locale_data" | grep -m1 'cloudCover:' | awk -F: '{print $2}'): "/g -e s/humidity:/"$(echo "$locale_data" | grep -m1 'humidity:' | awk -F: '{print $2}'): "/g -e s/pressure:/"$(echo "$locale_data" | grep -m1 'pressure:' | awk -F: '{print $2}'): "/g -e s/wind:/"$(echo "$locale_data" | grep -m1 'wind:' | awk -F: '{print $2}'): "/g
+# 元データ取得
+USER_AGENT='User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X)'
+WEATHER_DATA_CUR=$(curl -H "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/current-weather})
+WEATHER_DATA_MC=$(curl -H "$USER_AGENT" --silent $WEATHER_URL)
+DATA_CUR=$(echo "$WEATHER_DATA_CUR" | grep 'curCon' | tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"')
+DATA_MC=$(echo "$WEATHER_DATA_MC" | grep 'minuteCastSummary' | tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"')
+DATA_TODAY=$(echo "$WEATHER_DATA_CUR" | grep 'var today' | tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"')
+DATA_TOMORROW=$(echo "$WEATHER_DATA_MC" | grep 'dailyForecast' | tr '{|}' '\n' | grep -A3 $(date -v+1d '+%Y-%m-%d') | perl -pe 's/,"/\n/g' | tr -d '"')
+DATA_LOCALE=$(echo "$WEATHER_DATA_CUR" "$WEATHER_DATA_MC" | grep 'pageLocale' |  tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"')
+
+# 現在の温度と天気を表示
+if [ "$FLG_C" = 'true' ]; then
+    echo -e "\033[${CP_COLOR}m"$(echo "$DATA_LOCALE" | grep -A2 'CurrentConditionsCard:' | grep 'title' | awk -F: '{print $2}')"\033[0m"
+    echo -e "\033[${WE_COLOR}m"$(echo "$DATA_CUR" | grep 'temp' | awk -F: '{print $2}') $(echo "$DATA_CUR" | grep 'phrase' | awk -F: '{print $2}')"\033[0m"
+    # MINUTECASTを表示
+    if [ $(echo "$DATA_MC" | grep 'typeId' | awk -F: '{print $2}') -ne 0 ] || [ $MC_SHOW -eq 1 ];then
+        echo "$DATA_MC" | grep 'phrase' | awk -F: '{print $2}'
+    fi
+    # 現在の紫外線、雲量、湿度、風速・風向きを表示
+    if [ "$FLG_S" != 'true' ]; then
+        echo "$DATA_CUR" | grep -A2 'uv:' | tr '\n' ':' | awk -F: -v uvi="$(echo "$DATA_LOCALE" | grep 'uv:' | awk -F: '{print $2}')" '{print uvi": "$6,"("$4")"}'
+        echo "$DATA_CUR" | grep 'cc:\|humidity:\|pressure:\|wind:' | sed -e s/cc:/"$(echo "$DATA_LOCALE" | grep -m1 'cloudCover:' | awk -F: '{print $2}'): "/g -e s/humidity:/"$(echo "$DATA_LOCALE" | grep -m1 'humidity:' | awk -F: '{print $2}'): "/g -e s/pressure:/"$(echo "$DATA_LOCALE" | grep -m1 'pressure:' | awk -F: '{print $2}'): "/g -e s/wind:/"$(echo "$DATA_LOCALE" | grep -m1 'wind:' | awk -F: '{print $2}'): "/g
+    fi
+fi
+
+# 日中の最高気温、天気、紫外線最高値、風速・風向き、降水確率を表示
+if [ "$FLG_D" = 'true' ]; then
+    echo -e "\033[${CP_COLOR}m"$(echo "$DATA_LOCALE" | grep -m1 'day:' | awk -F: '{print $2}')"\033[0m"
+    echo -e "\033[${WE_COLOR}m""$(echo "$DATA_TODAY" | grep -A1 'day:' | grep 'dTemp' | awk -F: '{print $2}') $(echo "$DATA_TODAY" | awk '/day:/,/night:/' | grep 'phrase' | awk -F: '{print $2}')""\033[0m"
+    if [ "$FLG_S" != 'true' ]; then
+        echo "$DATA_TODAY" | grep -A2 'uv:' | tr '\n' ':' | awk -F: -v uvi="$(echo "$DATA_LOCALE" | grep 'maxUV:' | awk -F: '{print $2}')" '{print uvi": "$6,"("$4")"}'
+        echo "$DATA_TODAY" | awk '/day:/,/night:/' | grep 'wind:' | sed -e s/wind:/"$(echo "$DATA_LOCALE" | grep -m1 'wind:' | awk -F: '{print $2}'): "/g
+    fi
+    echo "$DATA_TODAY" | awk '/day:/,/night:/' | grep 'precip:' | sed -e s/precip:/"$(echo "$DATA_LOCALE" | grep -m1 'precip:' | awk -F: '{print $2}'): "/g
+fi
+
+# 夜間の最低気温、天気、風速・風向き、降水確率を表示
+if [ "$FLG_N" = 'true' ]; then
+    echo -e "\033[${CP_COLOR}m"$(echo "$DATA_LOCALE" | grep -m1 'night:' | awk -F: '{print $2}')"\033[0m"
+    echo -e "\033[${WE_COLOR}m""$(echo "$DATA_TODAY" | grep -A1 'night:' | grep 'dTemp' | awk -F: '{print $2}') $(echo "$DATA_TODAY" | awk '/night:/,/END/' | grep 'phrase' | awk -F: '{print $2}')""\033[0m"
+    if [ "$FLG_S" != 'true' ]; then
+        echo "$DATA_TODAY" | awk '/night:/,/END/' | grep 'wind:' | sed -e s/wind:/"$(echo "$DATA_LOCALE" | grep -m1 'wind:' | awk -F: '{print $2}'): "/g
+    fi
+    echo "$DATA_TODAY" | awk '/night:/,/END/' | grep 'precip:' | sed -e s/precip:/"$(echo "$DATA_LOCALE" | grep -m1 'precip:' | awk -F: '{print $2}'): "/g
+fi
+
+# 明日の最高・最低気温、天気、降水確率を表示
+if [ "$FLG_T" = 'true' ]; then
+    echo -e "\033[${CP_COLOR}m"$(echo "$DATA_LOCALE" | grep -m1 'tomorrow:' | awk -F: '{print $2}')"\033[0m"
+    echo -e "\033[${WE_COLOR}m""$(echo "$DATA_TOMORROW" | grep -A1 'day:' | grep 'dTemp' | awk -F: '{print $2}')/$(echo "$DATA_TOMORROW" | grep -A1 'night:' |grep 'dTemp' | awk -F: '{print $2}') $(echo "$DATA_TOMORROW" | grep -m1 'phrase' | awk -F: '{print $2}')""\033[0m"
+    echo "$DATA_TOMORROW" | awk '/day:/,/night:/' | grep 'precip:' | sed -e s/precip:/"$(echo "$DATA_LOCALE" | grep -m1 'precip:' | awk -F: '{print $2}'): "/g
 fi
