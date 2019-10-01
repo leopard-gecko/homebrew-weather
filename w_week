@@ -52,9 +52,9 @@ do
     n) [ "$FLAG_E" != 'true' ] && NUM_L="$OPTARG" ;;
     a) [ "$FLAG_E" != 'true' ] && AFTER="$OPTARG" ;;
     e) NUM_L=2;AFTER=$(expr 6 - $(date +%w));FLAG_E='true' ;;
-    h) usage;;
+    h) usage ;;
     l) WEATHER_URL=${WEATHER_URL/\/en\//\/"$OPTARG"\/} ;;
-    *) usage;;
+    *) usage ;;
   esac
 done
 
