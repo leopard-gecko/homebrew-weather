@@ -16,7 +16,7 @@ class Weather <Formula
     f.rewind;
     body = f.read;
     body = body.gsub(str) do |tmp|
-     ARGV[0]
+     args
     end
   
     f.rewind;
