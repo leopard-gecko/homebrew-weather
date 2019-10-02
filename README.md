@@ -17,16 +17,16 @@ $ `brew install weather --URL=https://www.accuweather.com/en/jp/koto-ku/221230/w
   現在の天気予報  
   
 オプション:  
-  -s    天気と降水確率のみ表示  （Simple）  
-  -c    現在の天気を表示       （Current）  
-  -d    日中の天気を表示       （Day）  
-  -n    夜間の天気を表示       （Night）  
-  -t    明日の天気を表示       （Tomorrow）  
-  -h    ヘルプ  
-  -l    表示言語  
+&nbsp;&nbsp;-s    天気と降水確率のみ表示  （Simple）  
+&nbsp;&nbsp;-c    現在の天気を表示       （Current）  
+&nbsp;&nbsp;-d    日中の天気を表示       （Day）  
+&nbsp;&nbsp;-n    夜間の天気を表示       （Night）  
+&nbsp;&nbsp;-t    明日の天気を表示       （Tomorrow）  
+&nbsp;&nbsp;-h    ヘルプ  
+&nbsp;&nbsp;-l    表示言語  
         （ja:日本語、en:English、fr:Français、de:Deutsch、zh-cn:中文 (SIM)など）  
-        
-        
+<br />
+<br />  
 `w_hour [-n 数値] [-a 数値] [-s 数値] [-h] [-l 言語]`  
 
 説明:  
@@ -39,8 +39,8 @@ $ `brew install weather --URL=https://www.accuweather.com/en/jp/koto-ku/221230/w
   -h    ヘルプ  
   -l    表示言語  
         （ja:日本語、en:English、fr:Français、de:Deutsch、zh-cn:中文 (SIM)など）  
-        
-        
+<br />
+<br />
 `w_week [-n 数値] [-a 数値] [-e | -h] [-l 言語]`  
 
 説明:  
