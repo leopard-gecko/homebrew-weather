@@ -1,7 +1,7 @@
 #!/bin/bash
 # 週間天気予報のスクリプト
 
-# 場所のURL （日本語表記にしたい場合は/en/を/ja/に書き換える）
+# 場所のURL（日本語表記にしたい場合は/en/を/ja/に書き換える）
 WEATHER_URL=${WEATHER_URL:='@WEATHER_URL@'}
 
 # 何日間？
