@@ -1,7 +1,7 @@
 # Documentation: https://docs.brew.sh/Formula-Cookbook
 #                https://rubydoc.brew.sh/Formula
 # PLEASE REMOVE ALL GENERATED COMMENTS BEFORE SUBMITTING YOUR PULL REQUEST!
-class ScriptFileFormula <Formula
+class Weather <Formula
 
   HOMEBREW_WEATHER_VERSION="1.0.0"
   
