@@ -1,5 +1,5 @@
 # weather
-`w_now`  現在の天気を表示  
+`w_now`&nbsp; 現在の天気を表示  
 `w_hour` 時間単位の天気予報を表示  
 `w_week` 週間天気予報を表示  
 
@@ -23,8 +23,7 @@ $ `brew install weather --URL=https://www.accuweather.com/en/jp/koto-ku/221230/w
 &nbsp;&nbsp;-n  夜間の天気を表示       （Night）  
 &nbsp;&nbsp;-t  明日の天気を表示       （Tomorrow）  
 &nbsp;&nbsp;-h  ヘルプ  
-&nbsp;&nbsp;-l  表示言語  
-        （ja:日本語、en:English、fr:Français、de:Deutsch、zh-cn:中文 (SIM)など）  
+&nbsp;&nbsp;-l  表示言語（ja:日本語、en:English、fr:Français、de:Deutsch、zh-cn:中文 (SIM)など）  
 <br />
 `w_hour [-n 数値] [-a 数値] [-s 数値] [-h] [-l 言語]`  
 
@@ -36,8 +35,7 @@ $ `brew install weather --URL=https://www.accuweather.com/en/jp/koto-ku/221230/w
 &nbsp;&nbsp;-a    何時間後から表示するかの数値  
 &nbsp;&nbsp;-s    何時間おきに表示するかの数値  
 &nbsp;&nbsp;-h    ヘルプ  
-&nbsp;&nbsp;-l    表示言語  
-        （ja:日本語、en:English、fr:Français、de:Deutsch、zh-cn:中文 (SIM)など）  
+&nbsp;&nbsp;-l    表示言語（ja:日本語、en:English、fr:Français、de:Deutsch、zh-cn:中文 (SIM)など）  
 <br />
 `w_week [-n 数値] [-a 数値] [-e | -h] [-l 言語]`  
 
@@ -49,6 +47,5 @@ $ `brew install weather --URL=https://www.accuweather.com/en/jp/koto-ku/221230/w
 &nbsp;&nbsp;-a    何日後から表示するかの数値  
 &nbsp;&nbsp;-e    週末の予報だけ表示する  
 &nbsp;&nbsp;-h    ヘルプ  
-&nbsp;&nbsp;-l    表示言語  
-        （ja:日本語、en:English、fr:Français、de:Deutsch、zh-cn:中文 (SIM)など）  
+&nbsp;&nbsp;-l    表示言語（ja:日本語、en:English、fr:Français、de:Deutsch、zh-cn:中文 (SIM)など）  
         
