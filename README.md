@@ -5,8 +5,8 @@
 
 # インストール
 
-$ brew tap leopard-gecko/weather  
-$ brew install weather --URL=https://www.accuweather.com/en/jp/koto-ku/221230/weather-forecast/221230  
+$ `brew tap leopard-gecko/weather  `
+$ `brew install weather --URL=https://www.accuweather.com/en/jp/koto-ku/221230/weather-forecast/221230  `
 
 (URLはまず https://www.accuweather.com/en/jp/japan-weather にアクセスし、自分が表示したい地域を検索して適宜変更する)
 
