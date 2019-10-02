@@ -7,10 +7,11 @@
 
 $ brew tap leopard-gecko/weather  
 $ brew install weather --URL=https://www.accuweather.com/en/jp/koto-ku/221230/weather-forecast/221230  
-(URLは適宜変更)
+
+(URLはまず https://www.accuweather.com/en/jp/japan-weather にアクセスし、自分が表示したい地域を検索して適宜変更する)
 
 # 各コマンドの使い方:
-w_now [-s | -c | -d | -n | -t | -h] [-l 言語]
+`w_now [-s | -c | -d | -n | -t | -h] [-l 言語]`
 
 説明:
   現在の天気予報
@@ -26,7 +27,7 @@ w_now [-s | -c | -d | -n | -t | -h] [-l 言語]
         （ja:日本語、en:English、fr:Français、de:Deutsch、zh-cn:中文 (SIM)など）
         
         
-w_hour [-n 数値] [-a 数値] [-s 数値] [-h] [-l 言語]
+`w_hour [-n 数値] [-a 数値] [-s 数値] [-h] [-l 言語]`
 
 説明:
   時間単位の天気予報
@@ -40,7 +41,7 @@ w_hour [-n 数値] [-a 数値] [-s 数値] [-h] [-l 言語]
         （ja:日本語、en:English、fr:Français、de:Deutsch、zh-cn:中文 (SIM)など）
         
         
-w_week [-n 数値] [-a 数値] [-e | -h] [-l 言語]
+`w_week [-n 数値] [-a 数値] [-e | -h] [-l 言語]`
 
 説明:
   週間天気予報
