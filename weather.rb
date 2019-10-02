@@ -10,27 +10,6 @@ class Weather <Formula
   version HOMEBREW_WEATHER_VERSION
 
   def install
-  
-  str='@WEATHER_URL@';
-  def replaceString(f,str)
-    f.rewind;
-    body = f.read;
-    body = body.gsub(str) do |tmp|
-     args
-    end
-  
-    f.rewind;
-    f.puts body;
-  end
-  files = Dir.glob('w_*')
-  files.each do |item|
-   open(item,"r+") {|f|  
-    f.flock(File::LOCK_EX)
-    replaceString(f,str);
-    f.truncate(f.tell);
-   }
-  end
-  
     bin.install Dir['*']
   end
 
