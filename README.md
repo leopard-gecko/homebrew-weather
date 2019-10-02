@@ -1,4 +1,4 @@
-# weather
+# Weather
 `w_now`&nbsp; 現在の天気を表示  
 `w_hour` 時間単位の天気予報を表示  
 `w_week` 週間天気予報を表示  
