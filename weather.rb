@@ -3,13 +3,34 @@
 # PLEASE REMOVE ALL GENERATED COMMENTS BEFORE SUBMITTING YOUR PULL REQUEST!
 class Weather <Formula
 
-  HOMEBREW_WEATHER_VERSION="1.0.0"
+  HOMEBREW_WEATHER_VERSION="1.0.1"
   
   url "https://github.com/leopard-gecko/homebrew-weather/releases/download/#{HOMEBREW_WEATHER_VERSION}/weather.zip"
   sha256 "c228415e707420797cf452c066e405810c8a1e8d8bb09f1b236d49b02bf6f934"
   version HOMEBREW_WEATHER_VERSION
+  option "url=", "表示させたい地域のURL"
 
   def install
+  
+  str='@WEATHER_URL@';
+  def replaceString(f,str)
+    f.rewind;
+    body = f.read;
+    body = body.gsub(str) do |tmp|
+    ARGV.value("url")
+  end
+  f.rewind;
+  f.puts body;
+  end
+  files = Dir.glob('w_*')
+  files.each do |item|
+    open(item,"r+") {|f|  
+      f.flock(File::LOCK_EX)
+      replaceString(f,str);
+      f.truncate(f.tell);
+    }
+  end
+  
     bin.install Dir['*']
   end
 
