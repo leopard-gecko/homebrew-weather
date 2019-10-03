@@ -44,7 +44,8 @@ do
     n) FLG_N='true' ;;
     t) FLG_T='true' ;;
     h) usage; exit 1 ;;
-    l) WEATHER_URL=${WEATHER_URL/\/en\//\/"$OPTARG"\/} ;;
+    l) LN=$(echo $WEATHER_URL | awk -F'www.accuweather.com' '{print $2}' | awk -F/ '{print $2}')
+       WEATHER_URL=${WEATHER_URL/\/$LN\//\/"$OPTARG"\/} ;;
     *) usage; exit 1 ;;
   esac
 done

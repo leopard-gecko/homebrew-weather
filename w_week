@@ -53,7 +53,8 @@ do
     a) [ "$FLAG_E" != 'true' ] && AFTER="$OPTARG" ;;
     e) NUM_L=2;AFTER=$(expr 6 - $(date +%w));FLAG_E='true' ;;
     h) usage ;;
-    l) WEATHER_URL=${WEATHER_URL/\/en\//\/"$OPTARG"\/} ;;
+    l) LN=$(echo $WEATHER_URL | awk -F'www.accuweather.com' '{print $2}' | awk -F/ '{print $2}')
+       WEATHER_URL=${WEATHER_URL/\/$LN\//\/"$OPTARG"\/} ;;
     *) usage ;;
   esac
 done
