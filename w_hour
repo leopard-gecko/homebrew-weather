@@ -5,7 +5,7 @@
 WEATHER_URL=${WEATHER_URL:='MY_WEATHER_URL'}
 
 # 何時間分？
-NUM_L=24
+NUM_L=25
 # 何時間後？
 AFTER=0
 # 何時間おき？
@@ -53,7 +53,7 @@ done
 USER_AGENT='User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X)'
 WEATHER_DATA0=$(curl -H "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/hourly-weather-forecast})
 WEATHER_DATA1=$(curl -H "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/hourly-weather-forecast}"?day=2")
-DATA_HOUR=$(echo "$WEATHER_DATA0" "$WEATHER_DATA1" | grep 'hourlyForecast' | tr '{|}' '\n' | grep 'localTime' | sed -n $(expr 1 + $AFTER),$(expr $NUM_L + $AFTER + 1)p)
+DATA_HOUR=$(echo "$WEATHER_DATA0" "$WEATHER_DATA1" | grep 'hourlyForecast' | tr '{|}' '\n' | grep 'localTime' | sed -n $(expr 1 + $AFTER),$(expr $NUM_L + $AFTER)p)
 DATA_LOCALE=$(echo "$WEATHER_DATA0" | grep -e 'pageLocale' |  tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"')
 LOCAL_PRECIP=$(echo "$DATA_LOCALE" | grep -m1 'precip:' | awk -F: '{print $2}')
 
