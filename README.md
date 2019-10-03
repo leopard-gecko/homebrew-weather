@@ -8,7 +8,7 @@
 $ `brew tap leopard-gecko/weather`  
 $ `brew install weather --URL=https://www.accuweather.com/en/jp/koto-ku/221230/weather-forecast/221230`  
 
-(まず https://www.accuweather.com/en/jp/japan-weather にアクセスし、自分が表示したい地域を検索して上のURLを適宜変更する。日本語表示にしたい場合は/en/を/ja/に変更する。)
+(まず https://www.accuweather.com/en/jp/japan-weather にアクセスし、自分が表示したい地域を検索して「--URL=」以降を適宜変更する。日本語表示にしたい場合は/en/を/ja/に変更する。)
 
 # 各コマンドの使い方:
 `w_now [-s | -c | -d | -n | -t | -h] [-l 言語]`  
