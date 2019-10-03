@@ -13,7 +13,7 @@ class Weather <Formula
     if myurl == nil then
       myurl = "https://www.accuweather.com/en/jp/koto-ku/221230/weather-forecast/221230"
     end
-    system("perl -pi -e 's*MY_WEATHER_URL*#{myurl}*g' w_*)
+    system("perl -pi -e 's*MY_WEATHER_URL*#{myurl}*g' w_*")
   
     bin.install Dir['*']
   end
