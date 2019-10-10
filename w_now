@@ -7,9 +7,10 @@ WEATHER_URL=${WEATHER_URL:='MY_WEATHER_URL'}
 # 120分間天気に変化がない時のMINUTECASTの表示（0 変化がなければ表示しない、1 常に表示する）
 MC_SHOW=0
 
-# 見出しと天気の色（30 黒、31 赤、32 緑、33 黄、34 青、35 マゼンタ、36 シアン、37 白、0 デフォルト、1 強調、2 弱強調、4 下線、5 点滅、7 反転）
+# 見出しと天気とMINUTECASTの色（30 黒、31 赤、32 緑、33 黄、34 青、35 マゼンタ、36 シアン、37 白、0 デフォルト、1 強調、2 弱強調、4 下線、5 点滅、7 反転）
 CP_COLOR='1' # 見出し
 WE_COLOR='4' # 天気
+MC_COLOR='7' # MINUITECAST
 
 # 使い方
 function usage() {
@@ -58,24 +59,25 @@ fi
 USER_AGENT='User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X)'
 WEATHER_DATA_CUR=$(curl -H "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/current-weather})
 WEATHER_DATA_MC=$(curl -H "$USER_AGENT" --silent $WEATHER_URL)
+WEATHER_HOUR=$(curl -H "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/hourly-weather-forecast})
 DATA_CUR=$(echo "$WEATHER_DATA_CUR" | grep 'curCon' | tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"')
 DATA_MC=$(echo "$WEATHER_DATA_MC" | grep 'minuteCastSummary' | tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"')
 DATA_TODAY=$(echo "$WEATHER_DATA_CUR" | grep 'var today' | tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"')
 DATA_TOMORROW=$(echo "$WEATHER_DATA_MC" | grep 'dailyForecast' | tr '{|}' '\n' | grep -A3 $(date -v+1d '+%Y-%m-%d') | perl -pe 's/,"/\n/g' | tr -d '"')
-DATA_LOCALE=$(echo "$WEATHER_DATA_CUR" "$WEATHER_DATA_MC" | grep 'pageLocale' |  tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"')
+DATA_LOCALE=$(echo "$WEATHER_DATA_CUR" "$WEATHER_DATA_MC" "$WEATHER_HOUR" | grep 'pageLocale' |  tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"')
 
 # 現在の温度と天気を表示
 if [ "$FLG_C" = 'true' ]; then
-  echo -e -n "\033[${CP_COLOR}m"$(echo "$DATA_LOCALE" | grep -A2 'CurrentConditionsCard:' | grep 'title' | awk -F: '{print $2}')"\033[0m: "
+  echo -e -n "\033[${CP_COLOR}m"$(echo "$DATA_LOCALE" | grep -A2 'CurConPanel:' | grep 'title' | awk -F: '{print $2}')"\033[0m: "
   echo -e "\033[${WE_COLOR}m"$(echo "$DATA_CUR" | grep 'temp' | awk -F: '{print $2}') $(echo "$DATA_CUR" | grep 'phrase' | awk -F: '{print $2}')"\033[0m"
   # MINUTECASTを表示
   if [ $(echo "$DATA_MC" | grep 'typeId' | awk -F: '{print $2}') -ne 0 ] || [ $MC_SHOW -eq 1 ];then
-    echo "$DATA_MC" | grep 'phrase' | awk -F: '{print $2}'
+    echo -e "\033[${MC_COLOR}m"$(echo "$DATA_MC" | grep 'phrase' | awk -F: '{print $2}')"\033[0m"
   fi
   # 現在の紫外線、雲量、湿度、風速・風向きを表示
   if [ "$FLG_S" != 'true' ]; then
-    echo "$DATA_CUR" | grep -A2 'uv:' | tr '\n' ':' | awk -F: -v uvi="$(echo "$DATA_LOCALE" | grep 'uv:' | awk -F: '{print $2}')" '{print uvi": "$6,"("$4")"}'
-    echo "$DATA_CUR" | grep 'cc:\|humidity:\|pressure:\|wind:' | sed -e s/cc:/"$(echo "$DATA_LOCALE" | grep -m1 'cloudCover:' | awk -F: '{print $2}'): "/g -e s/humidity:/"$(echo "$DATA_LOCALE" | grep -m1 'humidity:' | awk -F: '{print $2}'): "/g -e s/pressure:/"$(echo "$DATA_LOCALE" | grep -m1 'pressure:' | awk -F: '{print $2}'): "/g -e s/wind:/"$(echo "$DATA_LOCALE" | grep -m1 'wind:' | awk -F: '{print $2}'): "/g
+    echo "$DATA_CUR" | grep -A2 'uv:' | tr '\n' ':' | awk -F: -v uvi="$(echo "$DATA_LOCALE" | grep -m1 'uvIndex:' | awk -F: '{print $2}')" '{print uvi": "$6,"("$4")"}'
+    echo "$DATA_CUR" | grep 'cc:\|humidity:\|wind:' | sed -e s/cc:/"$(echo "$DATA_LOCALE" | grep -m1 'cloudCover:' | awk -F: '{print $2}'): "/g -e s/humidity:/"$(echo "$DATA_LOCALE" | grep -m1 'humidity:' | awk -F: '{print $2}'): "/g -e s/wind:/"$(echo "$DATA_LOCALE" | grep -m1 'wind:' | awk -F: '{print $2}'): "/g
   fi
 fi
 
@@ -85,7 +87,7 @@ if [ "$FLG_D" = 'true' ]; then
   echo -e -n "\033[${WE_COLOR}m""$(echo "$DATA_TODAY" | grep -A1 'day:' | grep 'dTemp' | awk -F: '{print $2}') $(echo "$DATA_TODAY" | awk '/day:/,/night:/' | grep 'phrase' | awk -F: '{print $2}')""\033[0m , "
   echo "$DATA_TODAY" | awk '/day:/,/night:/' | grep 'precip:' | sed -e s/precip:/"$(echo "$DATA_LOCALE" | grep -m1 'precip:' | awk -F: '{print $2}'): "/g
   if [ "$FLG_S" != 'true' ]; then
-    echo "\t$DATA_TODAY" | grep -A2 'uv:' | tr '\n' ':' | awk -F: -v uvi="$(echo "$DATA_LOCALE" | grep 'maxUV:' | awk -F: '{print $2}')" '{print uvi": "$6,"("$4")"}'
+    echo "\t$DATA_TODAY" | grep -A2 'uv:' | tr '\n' ':' | awk -F: -v uvi="$(echo "$DATA_LOCALE" | grep 'uv:' | awk -F: '{print $2}')" '{print uvi": "$6,"("$4")"}'
     echo "$DATA_TODAY" | awk '/day:/,/night:/' | grep 'wind:' | sed -e s/wind:/"$(echo "$DATA_LOCALE" | grep -m1 'wind:' | awk -F: '{print $2}'): "/g
   fi
 fi
