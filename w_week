@@ -59,25 +59,32 @@ do
   esac
 done
 
+# データ整理用関数
+pickup_day_data() { echo "$1" | grep -m1 $2 | tr '{|}' '\n' | grep -A3 $3 | perl -pe 's/,"/\n/g' | tr -d '"'; }
+pickup_d_n_word() { echo "$1" | grep -A7 $2 | grep -m1 $3 | awk -F: '{print $2}'; }
+pickup_data() { echo "$1" | grep -m1 $2 | tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"'; }
+pickup_word() { echo "$1" | grep -m1 $2 | awk -F: '{print $2}'; }
+
 # 元データ取得
-user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X)'
-weather_data=$(curl -A "$user_agent" --silent ${WEATHER_URL})
+USER_AGENT='Mozilla/5.0 (Macintosh; Intel Mac OS X)'
+WEATHER_DATA=$(curl -A "$USER_AGENT" --silent ${WEATHER_URL})
+WEATHER_DAILY=$(curl -A "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/daily-weather-forecast})
 for (( i = 0; i < $NUM_L; ++i ))
 do
-  week_data[$i]=$(echo "$weather_data" | grep 'dailyForecast' | tr '{|}' '\n' | grep -A3 $(date -v+$(($AFTER+$i))d '+%Y-%m-%d') | perl -pe 's/,"/\n/g' | tr -d '"')
+  DATA_WEEK[$i]=$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date -v+$(($AFTER+$i))d '+%Y-%m-%d'))
 done
-locale_data=$(curl -H "$user_agent" --silent ${WEATHER_URL/weather-forecast/daily-weather-forecast} | grep -e 'pageLocale' |  tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"')
-locale_precip=$(echo "$locale_data" | grep -m1 'precip:' | awk -F: '{print $2}')
-locale_sat=$(echo "$weather_data" | grep 'dailyForecast' | tr '{|}' '\n' | grep -A3 $(date -v+$(expr 6 - $(date +%w))d +%Y-%m-%d) | perl -pe 's/,"/\n/g' | tr -d '"' | grep $MYDOW | awk -F: '{print $2}')
-locale_sun=$(echo "$weather_data" | grep 'dailyForecast' | tr '{|}' '\n' | grep -A3 $(date -v+$(expr 7 - $(date +%w))d +%Y-%m-%d) | perl -pe 's/,"/\n/g' | tr -d '"' | grep $MYDOW | awk -F: '{print $2}')
+DATA_LOCALE=$(pickup_data "$WEATHER_DAILY" 'pageLocale')
+LOCAL_PRECIP=$(pickup_word "$DATA_LOCALE" 'precip:')
+LOCALE_SAT=$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date -v+$(expr 6 - $(date +%w))d +%Y-%m-%d) | grep $MYDOW | awk -F: '{print $2}')
+LOCALE_SUN=$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date -v+$(expr 7 - $(date +%w))d +%Y-%m-%d) | grep $MYDOW | awk -F: '{print $2}')
 
 # 日付、曜日、最高・最低気温、降水確率、天気を表示
 for (( i = 0; i < $NUM_L; ++i ))
 do
-  hi[$i]=$(echo "${week_data[$i]}" | grep -A1 'day:' | grep 'dTemp' | awk -F: '{print $2}')
-  lo[$i]=$(echo "${week_data[$i]}" | grep -A1 'night:' | grep 'dTemp' | awk -F: '{print $2}')
-  [ $DATE_B -eq 1 ] && printf "%5s " "$(echo "${week_data[$i]}" | grep 'date:' | awk -F: '{print $2}')"
-  [[ $DOW =~ 1|2 ]] && printf "($(echo "${week_data[$i]}" | grep -m1 $MYDOW | awk -F: '{print $2}' | sed -E s/$locale_sat/$(printf "\033[0;${SAT_COLOR}m")\&/ | sed -E s/$locale_sun/$(printf "\033[0;${SUN_COLOR}m")\&/ | sed -E 's/$/'$(printf "\033[0m")'/')) "
+  hi[$i]=$(echo "${DATA_WEEK[$i]}" | grep -A1 'day:' | grep 'dTemp' | awk -F: '{print $2}')
+  lo[$i]=$(echo "${DATA_WEEK[$i]}" | grep -A1 'night:' | grep 'dTemp' | awk -F: '{print $2}')
+  [ $DATE_B -eq 1 ] && printf "%5s " "$(echo "${DATA_WEEK[$i]}" | grep 'date:' | awk -F: '{print $2}')"
+  [[ $DOW =~ 1|2 ]] && printf "($(echo "${DATA_WEEK[$i]}" | grep -m1 $MYDOW | awk -F: '{print $2}' | sed -E s/$LOCALE_SAT/$(printf "\033[0;${SAT_COLOR}m")\&/ | sed -E s/$LOCALE_SUN/$(printf "\033[0;${SUN_COLOR}m")\&/ | sed -E 's/$/'$(printf "\033[0m")'/')) "
   printf "%5s/%5s " ${hi[$i]} ${lo[$i]}
-  echo "${locale_precip}:$(echo "${week_data[$i]}" | grep -m1 'precip' | awk -F: '{printf "%4s",$2}')  $(echo "${week_data[$i]}" | grep -m1 "$DETAIL" | awk -F: '{print $2}')"
+  echo "${LOCAL_PRECIP}:$(echo "${DATA_WEEK[$i]}" | grep -m1 'precip' | awk -F: '{printf "%4s",$2}')  $(echo "${DATA_WEEK[$i]}" | grep -m1 "$DETAIL" | awk -F: '{print $2}')"
 done
