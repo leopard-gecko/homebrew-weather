@@ -60,9 +60,9 @@ pickup_data() { echo "$1" | grep -m1 $2 | tr '{|}' '\n' | perl -pe 's/,"/\n/g' |
 pickup_word() { echo "$1" | grep -m1 $2 | awk -F: '{print $2}'; }
 
 # 元データ取得
-USER_AGENT='User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X)'
-WEATHER_DATA=$(curl -H "$USER_AGENT" --silent $WEATHER_URL)
-WEATHER_HOUR=$(curl -H "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/hourly-weather-forecast})
+USER_AGENT='Mozilla/5.0 (Macintosh; Intel Mac OS X)'
+WEATHER_DATA=$(curl -A "$USER_AGENT" --silent $WEATHER_URL)
+WEATHER_HOUR=$(curl -A "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/hourly-weather-forecast})
 DATA_CUR="$(pickup_data "$WEATHER_DATA" 'curCon')"
 DATA_MC="$(pickup_data "$WEATHER_DATA" 'minuteCastSummary')"
 DATA_TODAY="$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date '+%Y-%m-%d'))"
@@ -71,33 +71,33 @@ DATA_LOCALE="$(pickup_data "$WEATHER_DATA" 'pageLocale')""$(pickup_data "$WEATHE
 
 # 現在の温度と天気を表示
 if [ "$FLG_C" = 'true' ]; then
-  COLUMN="$(echo -e -n "\033[${CP_COLOR}m"$(echo "$DATA_LOCALE" | grep -A2 'CurConPanel:' | grep 'title' | awk -F: '{print $2}')"\033[0m:")"","
-  COLUMN="${COLUMN}$(echo -e $(pickup_word "$DATA_CUR" 'temp'),"\033[${WE_COLOR}m"$(pickup_word "$DATA_CUR" 'phrase')"\033[0m")""\n"
+  COLUMN="$(echo -e -n "\033[${CP_COLOR}m"$(echo "$DATA_LOCALE" | grep -A2 'CurConPanel:' | grep 'title' | awk -F: '{print $2}')"\033[0m:")""@"
+  COLUMN="${COLUMN}$(echo -e $(pickup_word "$DATA_CUR" 'temp')@"\033[${WE_COLOR}m"$(pickup_word "$DATA_CUR" 'phrase')"\033[0m")""\n"
 fi
 
 # 日中の最高気温、天気、降水確率を取得
 if [ "$FLG_D" = 'true' ]; then
-  COLUMN="${COLUMN}$(echo -e -n "\033[${CP_COLOR}m""$(pickup_word "$DATA_LOCALE" 'day:')""\033[0m: ")"","
-  COLUMN="${COLUMN}$(echo -e -n "$(pickup_d_n_word "$DATA_TODAY" 'day:' 'dTemp')$(pickup_word "$DATA_LOCALE" 'high:'),""\033[${WE_COLOR}m""$(pickup_d_n_word "$DATA_TODAY" 'day:' 'phrase')""\033[0m")"","
+  COLUMN="${COLUMN}$(echo -e -n "\033[${CP_COLOR}m""$(pickup_word "$DATA_LOCALE" 'day:')""\033[0m: ")""@"
+  COLUMN="${COLUMN}$(echo -e -n "$(pickup_d_n_word "$DATA_TODAY" 'day:' 'dTemp')$(pickup_word "$DATA_LOCALE" 'high:')@""\033[${WE_COLOR}m""$(pickup_d_n_word "$DATA_TODAY" 'day:' 'phrase')""\033[0m")""@"
   COLUMN="${COLUMN}$(echo -e $(pickup_word "$DATA_LOCALE" 'precip:'):$(pickup_d_n_word "$DATA_TODAY" 'day:' 'precip:'))""\n"
 fi
 
 # 夜間の最低気温、天気、降水確率を取得
 if [ "$FLG_N" = 'true' ]; then
-  COLUMN="${COLUMN}$(echo -e -n "\033[${CP_COLOR}m""$(pickup_word "$DATA_LOCALE" 'night:')""\033[0m: ")"","
-  COLUMN="${COLUMN}$(echo -e -n "$(pickup_d_n_word "$DATA_TODAY" 'night:' 'dTemp')$(pickup_word "$DATA_LOCALE" 'low:'),""\033[${WE_COLOR}m""$(pickup_d_n_word "$DATA_TODAY" 'night' 'phrase')""\033[0m")"","
+  COLUMN="${COLUMN}$(echo -e -n "\033[${CP_COLOR}m""$(pickup_word "$DATA_LOCALE" 'night:')""\033[0m: ")""@"
+  COLUMN="${COLUMN}$(echo -e -n "$(pickup_d_n_word "$DATA_TODAY" 'night:' 'dTemp')$(pickup_word "$DATA_LOCALE" 'low:')@""\033[${WE_COLOR}m""$(pickup_d_n_word "$DATA_TODAY" 'night' 'phrase')""\033[0m")""@"
   COLUMN="${COLUMN}$(echo -e $(pickup_word "$DATA_LOCALE" 'precip:'):$(pickup_d_n_word "$DATA_TODAY" 'night:' 'precip:'))""\n"
 fi
 
 # 明日の最高・最低気温、天気、降水確率を取得
 if [ "$FLG_T" = 'true' ]; then
-  COLUMN="${COLUMN}$(echo -e -n "\033[${CP_COLOR}m""$(pickup_word "$DATA_LOCALE" 'tomorrow:')""\033[0m: ")"","
-  COLUMN="${COLUMN}$(echo -e -n "$(pickup_d_n_word "$DATA_TOMORROW" 'day:' 'dTemp')/$(pickup_d_n_word "$DATA_TOMORROW" 'night:' 'dTemp'),""\033[${WE_COLOR}m""$(pickup_word "$DATA_TOMORROW" 'phrase')""\033[0m")"","
+  COLUMN="${COLUMN}$(echo -e -n "\033[${CP_COLOR}m""$(pickup_word "$DATA_LOCALE" 'tomorrow:')""\033[0m: ")""@"
+  COLUMN="${COLUMN}$(echo -e -n "$(pickup_d_n_word "$DATA_TOMORROW" 'day:' 'dTemp')/$(pickup_d_n_word "$DATA_TOMORROW" 'night:' 'dTemp')@""\033[${WE_COLOR}m""$(pickup_word "$DATA_TOMORROW" 'phrase')""\033[0m")""@"
   COLUMN="${COLUMN}$(echo -e $(pickup_word "$DATA_LOCALE" 'precip:'):$(pickup_d_n_word "$DATA_TOMORROW" 'day:' 'precip:'))"
 fi
 
 # 各データを表として表示
-echo -e "$COLUMN" | column -t -s","
+echo -e "$COLUMN" | column -t -s"@"
 
 # MINUTECASTを表示
 if [ $(pickup_word "$DATA_MC" 'typeId') -ne 0 ] || [ $MC_SHOW -eq 1 ];then

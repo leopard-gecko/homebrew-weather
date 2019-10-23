@@ -60,8 +60,8 @@ do
 done
 
 # 元データ取得
-user_agent='User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X)'
-weather_data=$(curl -H "$user_agent" --silent ${WEATHER_URL})
+user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X)'
+weather_data=$(curl -A "$user_agent" --silent ${WEATHER_URL})
 for (( i = 0; i < $NUM_L; ++i ))
 do
   week_data[$i]=$(echo "$weather_data" | grep 'dailyForecast' | tr '{|}' '\n' | grep -A3 $(date -v+$(($AFTER+$i))d '+%Y-%m-%d') | perl -pe 's/,"/\n/g' | tr -d '"')
