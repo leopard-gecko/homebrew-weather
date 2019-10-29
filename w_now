@@ -10,7 +10,8 @@ MC_SHOW=0
 # 見出しと天気とMINUTECASTの色（30 黒、31 赤、32 緑、33 黄、34 青、35 マゼンタ、36 シアン、37 白、0 デフォルト、1 強調、2 弱強調、4 下線、5 点滅、7 反転）
 CP_COLOR='1' # 見出し
 WE_COLOR='0' # 天気
-MC_COLOR='4' # MINUITECAST
+MC_COLOR='1' # MINUITECAST
+C_COLOR='31' # 気象警報
 
 # 使い方
 function usage() {
@@ -58,6 +59,7 @@ pickup_day_data() { echo "$1" | grep -m1 $2 | tr '{|}' '\n' | grep -A3 $3 | perl
 pickup_d_n_word() { echo "$1" | grep -A7 $2 | grep -m1 $3 | awk -F: '{print $2}'; }
 pickup_data() { echo "$1" | grep -m1 $2 | tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"'; }
 pickup_word() { echo "$1" | grep -m1 $2 | awk -F: '{print $2}'; }
+pickup_multi_words() { echo "$1" | grep $2 | awk -F'content:' '{print $2}'; }
 
 # 元データ取得
 USER_AGENT='Mozilla/5.0 (Macintosh; Intel Mac OS X)'
@@ -68,6 +70,7 @@ DATA_MC="$(pickup_data "$WEATHER_DATA" 'minuteCastSummary')"
 DATA_TODAY="$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date '+%Y-%m-%d'))"
 DATA_TOMORROW="$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date -v+1d '+%Y-%m-%d'))"
 DATA_LOCALE="$(pickup_data "$WEATHER_DATA" 'pageLocale')""$(pickup_data "$WEATHER_HOUR" 'pageLocale')"
+DATA_WN=$(pickup_data "$WEATHER_DATA" 'banners')
 
 # 現在の温度と天気を取得
 if [ "$FLG_C" = 'true' ]; then
@@ -97,11 +100,15 @@ if [ "$FLG_T" = 'true' ]; then
 fi
 
 # 地名を表示
-pickup_data "$WEATHER_DATA" 'currentLocation' | grep localizedName | awk -F: '{print $2}' | tr '\n' ',' | awk -F, '{printf "%s, %s\n",$3,$1}'
+PLACE=($(pickup_data "$WEATHER_DATA" 'currentLocation' | grep localizedName | awk -F: '{print $2}'))
+echo ${PLACE[2]}, ${PLACE[0]}
 # 各データを表として表示
 echo -e "$COLUMN" | column -t -s"@"
-
 # MINUTECASTを表示
 if [ $(pickup_word "$DATA_MC" 'typeId') -ne 0 ] || [ $MC_SHOW -eq 1 ];then
-  echo -e "\033[${MC_COLOR}m"$(pickup_word "$DATA_MC" 'phrase')"\033[0m"
+  echo -e "\033[${MC_COLOR}m""$(echo "$DATA_LOCALE" | grep -A2 minutecastHeader | tr -d '\n' | sed -e s/'Location Name'/${PLACE[2]}/ -e 's/.*://' )"": ""\033[0m"$(pickup_word "$DATA_MC" 'phrase')
+fi
+# Warningを取得して表示
+if [ "`echo $DATA_WN | grep content`" ]; then
+pickup_multi_words "$DATA_WN" 'content' | sed -E 's/^/'$(printf "\033[0;${C_COLOR}m")'/' | sed -E 's/$/'$(printf "\033[0m")'/'
 fi
