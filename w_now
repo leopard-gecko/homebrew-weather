@@ -69,7 +69,7 @@ DATA_TODAY="$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date '+%Y-%m-%d'
 DATA_TOMORROW="$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date -v+1d '+%Y-%m-%d'))"
 DATA_LOCALE="$(pickup_data "$WEATHER_DATA" 'pageLocale')""$(pickup_data "$WEATHER_HOUR" 'pageLocale')"
 
-# 現在の温度と天気を表示
+# 現在の温度と天気を取得
 if [ "$FLG_C" = 'true' ]; then
   COLUMN="$(echo -e -n "\033[${CP_COLOR}m"$(echo "$DATA_LOCALE" | grep -A2 'CurConPanel:' | grep 'title' | awk -F: '{print $2}')"\033[0m:")""@"
   COLUMN="${COLUMN}$(echo -e $(pickup_word "$DATA_CUR" 'temp')@"\033[${WE_COLOR}m"$(pickup_word "$DATA_CUR" 'phrase')"\033[0m")""\n"
@@ -96,6 +96,8 @@ if [ "$FLG_T" = 'true' ]; then
   COLUMN="${COLUMN}$(echo -e $(pickup_word "$DATA_LOCALE" 'precip:'):$(pickup_d_n_word "$DATA_TOMORROW" 'day:' 'precip:'))"
 fi
 
+# 地名を表示
+pickup_data "$WEATHER_DATA" 'currentLocation' | grep localizedName | awk -F: '{print $2}' | tr '\n' ',' | awk -F, '{printf "%s, %s\n",$3,$1}'
 # 各データを表として表示
 echo -e "$COLUMN" | column -t -s"@"
 

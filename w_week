@@ -78,6 +78,8 @@ LOCAL_PRECIP=$(pickup_word "$DATA_LOCALE" 'precip:')
 LOCALE_SAT=$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date -v+$(expr 6 - $(date +%w))d +%Y-%m-%d) | grep $MYDOW | awk -F: '{print $2}')
 LOCALE_SUN=$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date -v+$(expr 7 - $(date +%w))d +%Y-%m-%d) | grep $MYDOW | awk -F: '{print $2}')
 
+# 地名を表示
+pickup_data "$WEATHER_DATA" 'currentLocation' | grep localizedName | awk -F: '{print $2}' | tr '\n' ',' | awk -F, '{printf "%s, %s\n",$3,$1}'
 # 日付、曜日、最高・最低気温、降水確率、天気を表示
 for (( i = 0; i < $NUM_L; ++i ))
 do

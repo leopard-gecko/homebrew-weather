@@ -1,9 +1,9 @@
 class Weather <Formula
 
-  HOMEBREW_WEATHER_VERSION="0.9.7"
+  HOMEBREW_WEATHER_VERSION="0.9.8"
   
   url "https://github.com/leopard-gecko/homebrew-weather/releases/download/#{HOMEBREW_WEATHER_VERSION}/weather.zip"
-  sha256 "228214babfa9648e4dbd01b85bee45d6f0e42f4b258dc9dea2ebb7413aa6972a"
+  sha256 "3a205e84c77f3c7a86de6239ebc79e45078e61edc262fa49e4c66326111ee02b"
   version HOMEBREW_WEATHER_VERSION
   option "URL=", "表示させたい地域のURL"
 
