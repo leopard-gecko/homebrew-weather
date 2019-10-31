@@ -5,15 +5,15 @@
 WEATHER_URL=${WEATHER_URL:='MY_WEATHER_URL'}
 
 # 何時間分？
-NUM_L=25
+NUM_HOUR=25
 # 何時間後？
 AFTER=0
 # 何時間おき？
 SKIP=2
 
 # AMとPMの色  30 黒、31 赤、32 緑、33 黄、34 青、35 マゼンタ、36 シアン、37 白、0 デフォルト
-AM_COLOR='31'
-PM_COLOR='34'
+COLOR_AM='31'
+COLOR_PM='34'
 
 # 使い方
 function usage() {
@@ -40,7 +40,7 @@ exit 1
 while getopts n:a:s:hl: OPT
 do
   case $OPT in
-    n) NUM_L="$OPTARG" ;;
+    n) NUM_HOUR="$OPTARG" ;;
     a) AFTER="$OPTARG" ;;
     s) SKIP="$OPTARG" ;;
     h) usage; exit 1 ;;
@@ -57,7 +57,7 @@ pickup_data() { echo "$1" | grep -m1 $2 | tr '{|}' '\n' | perl -pe 's/,"/\n/g' |
 USER_AGENT='Mozilla/5.0 (Macintosh; Intel Mac OS X)'
 WEATHER_DATA0=$(curl -A "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/hourly-weather-forecast})
 WEATHER_DATA1=$(curl -A "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/hourly-weather-forecast}"?day=2")
-DATA_HOUR=$(echo "$WEATHER_DATA0" "$WEATHER_DATA1" | grep 'hourlyForecast' | tr '{|}' '\n' | grep 'localTime' | sed -n $(expr 1 + $AFTER),$(expr $NUM_L + $AFTER)p)
+DATA_HOUR=$(echo "$WEATHER_DATA0" "$WEATHER_DATA1" | grep 'hourlyForecast' | tr '{|}' '\n' | grep 'localTime' | sed -n $(expr 1 + $AFTER),$(expr $NUM_HOUR + $AFTER)p)
 DATA_LOCALE=$(echo "$WEATHER_DATA0" | grep -e 'pageLocale' |  tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"')
 LOCALE_PRECIP=$(echo "$DATA_LOCALE" | grep -m1 'precip:' | awk -F: '{print $2}')
 
@@ -83,9 +83,9 @@ for i in $(seq 0 $SKIP $((${#HOUR_TIME[@]}-1)))
 do
   printf "%5s " "${HOUR_DATE[$i]}"
   if [ "$(echo $WEATHER_URL | grep '/hi/\|/ar/\|/el/\|/ko/\|/ms/\|/bn/\|/ur/\|/kn/\|/te/\|/mr/\|/pa/\|/zh\|/en/')" ]; then
-      printf "%5s  " "${HOUR_TIME[$i]}" | sed -E 's/AM|पूर्वाह्न|π.μ.|오전|PG|পূর্বাহ্|ಪೂರ್ವಾಹ್ನ|म.पू.|ਪੂ.ਦੁ.|上午|ص|قبل دوپہر/'$(printf "\033[0;${AM_COLOR}m")'&'$(printf "\033[0m")'/' | sed -E 's/PM|अपराह्|μ.μ.|오후|PTG|অপরাহ্ণ|ಅಪರಾಹ್ನ|PM|म.उ.|ਬਾ.ਦੁ.|下午|م|بعد دوپہر/'$(printf "\033[0;${PM_COLOR}m")'&'$(printf "\033[0m")'/' | tr -d '\n'
+      printf "%5s  " "${HOUR_TIME[$i]}" | sed -E 's/AM|पूर्वाह्न|π.μ.|오전|PG|পূর্বাহ্|ಪೂರ್ವಾಹ್ನ|म.पू.|ਪੂ.ਦੁ.|上午|ص|قبل دوپہر/'$(printf "\033[0;${COLOR_AM}m")'&'$(printf "\033[0m")'/' | sed -E 's/PM|अपराह्|μ.μ.|오후|PTG|অপরাহ্ণ|ಅಪರಾಹ್ನ|PM|म.उ.|ਬਾ.ਦੁ.|下午|م|بعد دوپہر/'$(printf "\033[0;${COLOR_PM}m")'&'$(printf "\033[0m")'/' | tr -d '\n'
   else
-      printf "%5s  " "${HOUR_TIME[$i]}" | perl -pe 's/((?<![0-9])([0-9])(?![0-9])|0[0-9]|1[0-1])/\1'$(printf "\033[0;${AM_COLOR}m")'/' | sed -E 's/(1[2-9]|2[0-3])/&'$(printf "\033[0;${PM_COLOR}m")'/' | sed -E 's/$/'$(printf "\033[0m")'/' | tr -d '\n'
+      printf "%5s  " "${HOUR_TIME[$i]}" | perl -pe 's/((?<![0-9])([0-9])(?![0-9])|0[0-9]|1[0-1])/\1'$(printf "\033[0;${COLOR_AM}m")'/' | sed -E 's/(1[2-9]|2[0-3])/&'$(printf "\033[0;${COLOR_PM}m")'/' | sed -E 's/$/'$(printf "\033[0m")'/' | tr -d '\n'
   fi
   echo "${HOUR_TEMP[$i]} ${LOCALE_PRECIP}:$(printf "%4s" "${HOUR_PRECIP[$i]}")  ${HOUR_WEATHER[$i]}"
 done
