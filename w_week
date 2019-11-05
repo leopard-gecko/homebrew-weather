@@ -67,7 +67,6 @@ pickup_word() { echo "$1" | grep -m1 $2 | awk -F: '{print $2}'; }
 
 # 元データ取得
 USER_AGENT='Mozilla/5.0 (Macintosh; Intel Mac OS X)'
-WEATHER_DATA=$(curl -A "$USER_AGENT" --silent ${WEATHER_URL})
 WEATHER_DAILY=$(curl -A "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/daily-weather-forecast})
 for (( i = 0; i < $NUM_L; ++i ))
 do
@@ -79,7 +78,7 @@ LOCALE_SAT=$(pickup_day_data "$WEATHER_DAILY" 'dailyForecast' $(date -v+$(expr 6
 LOCALE_SUN=$(pickup_day_data "$WEATHER_DAILY" 'dailyForecast' $(date -v+$(expr 7 - $(date +%w))d +%Y-%m-%d) | grep $MY_DOW | awk -F: '{print $2}')
 
 # 地名を表示
-PLACE=($(pickup_data "$WEATHER_DATA" 'currentLocation' | grep localizedName | awk -F: '{print $2}'))
+PLACE=($(pickup_data "$WEATHER_DAILY" 'currentLocation' | grep localizedName | awk -F: '{print $2}'))
 echo ${PLACE[2]}, ${PLACE[0]}
 # 日付、曜日、最高・最低気温、降水確率、天気を表示
 for (( i = 0; i < $NUM_L; ++i ))
