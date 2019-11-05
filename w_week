@@ -71,12 +71,12 @@ WEATHER_DATA=$(curl -A "$USER_AGENT" --silent ${WEATHER_URL})
 WEATHER_DAILY=$(curl -A "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/daily-weather-forecast})
 for (( i = 0; i < $NUM_L; ++i ))
 do
-  DATA_WEEK[$i]=$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date -v+$(($AFTER+$i))d '+%Y-%m-%d'))
+  DATA_WEEK[$i]=$(pickup_day_data "$WEATHER_DAILY" 'dailyForecast' $(date -v+$(($AFTER+$i))d '+%Y-%m-%d'))
 done
 DATA_LOCALE=$(pickup_data "$WEATHER_DAILY" 'pageLocale')
 LOCAL_PRECIP=$(pickup_word "$DATA_LOCALE" 'precip:')
-LOCALE_SAT=$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date -v+$(expr 6 - $(date +%w))d +%Y-%m-%d) | grep $MY_DOW | awk -F: '{print $2}')
-LOCALE_SUN=$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date -v+$(expr 7 - $(date +%w))d +%Y-%m-%d) | grep $MY_DOW | awk -F: '{print $2}')
+LOCALE_SAT=$(pickup_day_data "$WEATHER_DAILY" 'dailyForecast' $(date -v+$(expr 6 - $(date +%w))d +%Y-%m-%d) | grep $MY_DOW | awk -F: '{print $2}')
+LOCALE_SUN=$(pickup_day_data "$WEATHER_DAILY" 'dailyForecast' $(date -v+$(expr 7 - $(date +%w))d +%Y-%m-%d) | grep $MY_DOW | awk -F: '{print $2}')
 
 # 地名を表示
 PLACE=($(pickup_data "$WEATHER_DATA" 'currentLocation' | grep localizedName | awk -F: '{print $2}'))
