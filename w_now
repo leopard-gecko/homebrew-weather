@@ -71,7 +71,7 @@ DATA_TODAY="$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date '+%Y-%m-%d'
 DATA_TOMORROW="$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date -v+1d '+%Y-%m-%d'))"
 DATA_LOCALE="$(pickup_data "$WEATHER_DATA" 'pageLocale')""$(pickup_data "$WEATHER_HOUR" 'pageLocale')"
 DATA_WN=$(pickup_data "$WEATHER_DATA" 'banners')
-LOCALE_PRECIP=$(echo "$WEATHER_HOUR" | grep -m2 -A1 '<div class="precip">' | grep -v '<div class="precip">' | grep -v '\-\-' | tr -d '\t' | perl -C -MEncode -pe 's/&#x([0-9A-F]{4});/chr(hex($1))/ge')
+LOCALE_PRECIP=$(echo "$WEATHER_HOUR" | grep -m2 -A1 '<div class="precip">' | grep -v '<div class="precip">' | grep -v '\-\-' | tr -d '\t' | perl -C -MEncode -pe 's/&#x([0-9A-F]{2,4});/chr(hex($1))/ge')
 
 # 現在の温度と天気を取得
 if [ "$FLG_C" = 'true' ]; then
