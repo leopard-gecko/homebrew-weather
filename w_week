@@ -63,8 +63,8 @@ DATA_WEEK_RAW=$(echo "$WEATHER_DATA" | grep -A27 'forecast-list-card forecast-ca
 _IFS="$IFS";IFS='^'
 DATA_WEEK=($(echo "$DATA_WEEK_RAW" | sed s/--/^/g))
 IFS="$_IFS"
-LOCALE_SAT=$(echo "$DATA_WEEK_RAW" | grep -A5 '<p class="dow">' | grep -B3 $(date -v+$(expr 6 - $(date +%w))d +%m/%d) | sed -n '1p')
-LOCALE_SUN=$(echo "$DATA_WEEK_RAW" | grep -A5 '<p class="dow">' | grep -B3 $(date -v+$(expr 7 - $(date +%w))d +%m/%d) | sed -n '1p')
+LOCALE_SAT=$(echo "$DATA_WEEK_RAW" | grep -A4 "?day=$(expr 6 - $(date +%w) + 1)\"" | sed -n '5p')
+LOCALE_SUN=$(echo "$DATA_WEEK_RAW" | grep -A4 "?day=$(expr 7 - $(date +%w) + 1)\"" | sed -n '5p')
 LOCALE_PRECIP=$(echo "$DATA_WEEK_RAW" | grep -A2 '<div class="info precip">' | sed -n '3p')
 
 # 地名を表示
@@ -81,6 +81,6 @@ do
   PHRASE[$i]=$(echo "${DATA_WEEK[$(expr $i + $AFTER)]}" | grep -A1 '<span class="phrase">' | grep -v '<span class="phrase">')
   [ $F_DATE -eq 1 ] && printf "%5s" "${DATE[$i]}"
   [ $F_DOW -eq 1 ] && printf " (%3s)" "${DOW[$i]}"
-  printf "%6s%-9s" ${HI[$i]} "${LO[$i]}"
+  printf "%5s%-9s" ${HI[$i]} "${LO[$i]}"
   echo "$LOCALE_PRECIP:${PRECIP[$i]}  ${PHRASE[$i]}"
 done
