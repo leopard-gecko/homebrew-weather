@@ -4,9 +4,6 @@
 # 場所のURL（日本語表記にしたい場合は/en/を/ja/に書き換える）
 WEATHER_URL=${WEATHER_URL:='MY_WEATHER_URL'}
 
-# 120分間天気に変化がない時のMINUTECASTの表示（0 変化がなければ表示しない、1 常に表示する）
-F_MC=0
-
 # 見出しと天気とMINUTECASTの色（30 黒、31 赤、32 緑、33 黄、34 青、35 マゼンタ、36 シアン、37 白、0 デフォルト、1 強調、2 弱強調、4 下線、5 点滅、7 反転）
 COLOR_CP='1'  # 見出し
 COLOR_WE='0'  # 天気
@@ -55,49 +52,43 @@ if [ "$FLG_C" != 'true' ] && [ "$FLG_D" != 'true' ] && [ "$FLG_N" != 'true' ] &&
 fi
 
 # データ整理用関数
-pickup_day_data() { echo "$1" | grep -m1 $2 | tr '{|}' '\n' | grep -A3 $3 | perl -pe 's/,"/\n/g' | tr -d '"'; }
-pickup_d_n_word() { echo "$1" | grep -A7 $2 | grep -m1 $3 | awk -F: '{print $2}'; }
 pickup_data() { echo "$1" | grep -m1 $2 | tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"'; }
-pickup_word() { echo "$1" | grep -m1 $2 | awk -F: '{print $2}'; }
-pickup_multi_words() { echo "$1" | grep $2 | awk -F'content:' '{print $2}'; }
 
 # 元データ取得
 USER_AGENT='Mozilla/5.0 (Macintosh; Intel Mac OS X)'
 WEATHER_DATA=$(curl -A "$USER_AGENT" --silent $WEATHER_URL)
 WEATHER_HOUR=$(curl -A "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/hourly-weather-forecast})
-DATA_CUR="$(pickup_data "$WEATHER_DATA" 'curCon')"
-DATA_MC="$(pickup_data "$WEATHER_DATA" 'minuteCastSummary')"
-DATA_TODAY="$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date '+%Y-%m-%d'))"
-DATA_TOMORROW="$(pickup_day_data "$WEATHER_DATA" 'dailyForecast' $(date -v+1d '+%Y-%m-%d'))"
-DATA_LOCALE="$(pickup_data "$WEATHER_DATA" 'pageLocale')""$(pickup_data "$WEATHER_HOUR" 'pageLocale')"
-DATA_WN=$(pickup_data "$WEATHER_DATA" 'banners')
-LOCALE_PRECIP=$(echo "$WEATHER_HOUR" | grep -m2 -A1 '<div class="precip">' | grep -v '<div class="precip">' | grep -v '\-\-' | tr -d '\t' | perl -C -MEncode -pe 's/&#x([0-9A-F]{2,4});/chr(hex($1))/ge')
+DATA_NOW="$(echo "$WEATHER_DATA" | awk '/a class="panel panel-fade-in card current "/,/threeday-panel-next/' | tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }')"
+DATA_MC=$(echo "$WEATHER_DATA" | grep -A5 '<div class="banner-header">' | tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }')
+DATA_WN=$(echo "$WEATHER_DATA" | grep -A3 '<div class="alert-banner alert-banner-weather">' | grep '<span>' | sed 's/<[^>]*>//g' | tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }')
+
+# 各データ取得
+_IFS="$IFS";IFS=$'\n'
+TITLE=($(echo "$DATA_NOW" | grep -A1 '<p class="module-header">' | grep -v '<p class="module-header">' | perl -pe 's/--\n//g'))
+TEMP_HI=($(echo "$DATA_NOW" | grep -A1 '<span class="high">' | grep -v '<span class="high">' | perl -pe 's/--\n//g'))
+TEMP_LO=($(echo "$DATA_NOW" | grep -A1 '<span class="low">' | grep -v '<span class="low">' | perl -pe 's/--\n//g'))
+PHRASE=($(echo "$DATA_NOW" | grep -A1 '<div class="cond">' | grep -v '<div class="cond">' | perl -pe 's/--\n//g'))
+IFS="$_IFS"
 
 # 現在の温度と天気を取得
 if [ "$FLG_C" = 'true' ]; then
-  COLUMN="$(echo -e -n "\033[${COLOR_CP}m"$(echo "$DATA_LOCALE" | grep -A2 'CurConPanel:' | grep 'title' | awk -F: '{print $2}')"\033[0m:")""@"
-  COLUMN="${COLUMN}$(echo -e $(pickup_word "$DATA_CUR" 'temp')@"\033[${COLOR_WE}m"$(pickup_word "$DATA_CUR" 'phrase')"\033[0m")""\n"
+  COLUMN="$(echo -e -n "\033[${COLOR_CP}m"$(echo "${TITLE[0]}")"\033[0m:")""@"
+  COLUMN="${COLUMN}$(echo -e $(echo ${TEMP_HI[0]}${TEMP_LO[0]})@"\033[${COLOR_WE}m"$(echo ${PHRASE[0]})"\033[0m")""\n"
 fi
-
-# 日中の最高気温、天気、降水確率を取得
+# 日中の最高気温、天気を取得
 if [ "$FLG_D" = 'true' ]; then
-  COLUMN="${COLUMN}$(echo -e -n "\033[${COLOR_CP}m""$(pickup_word "$DATA_LOCALE" 'day:')""\033[0m: ")""@"
-  COLUMN="${COLUMN}$(echo -e -n "$(pickup_d_n_word "$DATA_TODAY" 'day:' 'dTemp')$(pickup_word "$DATA_LOCALE" 'high:')@""\033[${COLOR_WE}m""$(pickup_d_n_word "$DATA_TODAY" 'day:' 'phrase')""\033[0m")""@"
-  COLUMN="${COLUMN}$(echo -e $(echo $LOCALE_PRECIP):$(pickup_d_n_word "$DATA_TODAY" 'day:' 'precip:'))""\n"
+  COLUMN="${COLUMN}$(echo -e -n "\033[${COLOR_CP}m""$(echo "${TITLE[1]}")""\033[0m: ")""@"
+  COLUMN="${COLUMN}$(echo -e $(echo ${TEMP_HI[1]}${TEMP_LO[1]})@"\033[${COLOR_WE}m"$(echo ${PHRASE[1]})"\033[0m")""\n"
 fi
-
-# 夜間の最低気温、天気、降水確率を取得
+# 夜間の最低気温、天気を取得
 if [ "$FLG_N" = 'true' ]; then
-  COLUMN="${COLUMN}$(echo -e -n "\033[${COLOR_CP}m""$(pickup_word "$DATA_LOCALE" 'night:')""\033[0m: ")""@"
-  COLUMN="${COLUMN}$(echo -e -n "$(pickup_d_n_word "$DATA_TODAY" 'night:' 'dTemp')$(pickup_word "$DATA_LOCALE" 'low:')@""\033[${COLOR_WE}m""$(pickup_d_n_word "$DATA_TODAY" 'night' 'phrase')""\033[0m")""@"
-  COLUMN="${COLUMN}$(echo -e $(echo $LOCALE_PRECIP):$(pickup_d_n_word "$DATA_TODAY" 'night:' 'precip:'))""\n"
+  COLUMN="${COLUMN}$(echo -e -n "\033[${COLOR_CP}m""$(echo "${TITLE[2]}")""\033[0m: ")""@"
+  COLUMN="${COLUMN}$(echo -e $(echo ${TEMP_HI[2]}${TEMP_LO[2]})@"\033[${COLOR_WE}m"$(echo ${PHRASE[2]})"\033[0m")""\n"
 fi
-
-# 明日の最高・最低気温、天気、降水確率を取得
+# 明日の最高・最低気温、天気を取得
 if [ "$FLG_T" = 'true' ]; then
-  COLUMN="${COLUMN}$(echo -e -n "\033[${COLOR_CP}m""$(pickup_word "$DATA_LOCALE" 'tomorrow:')""\033[0m: ")""@"
-  COLUMN="${COLUMN}$(echo -e -n "$(pickup_d_n_word "$DATA_TOMORROW" 'day:' 'dTemp')/$(pickup_d_n_word "$DATA_TOMORROW" 'night:' 'dTemp')@""\033[${COLOR_WE}m""$(pickup_word "$DATA_TOMORROW" 'phrase')""\033[0m")""@"
-  COLUMN="${COLUMN}$(echo -e $(echo $LOCALE_PRECIP):$(pickup_d_n_word "$DATA_TOMORROW" 'day:' 'precip:'))"
+  COLUMN="${COLUMN}$(echo -e -n "\033[${COLOR_CP}m""$(echo "${TITLE[3]}")""\033[0m: ")""@"
+  COLUMN="${COLUMN}$(echo -e $(echo ${TEMP_HI[3]}${TEMP_LO[3]})@"\033[${COLOR_WE}m"$(echo ${PHRASE[3]})"\033[0m")""\n"
 fi
 
 # 地名を表示
@@ -105,11 +96,14 @@ PLACE=($(pickup_data "$WEATHER_DATA" 'currentLocation' | grep localizedName | aw
 echo ${PLACE[2]}, ${PLACE[0]}
 # 各データを表として表示
 echo -e "$COLUMN" | column -t -s"@"
+
 # MINUTECASTを表示
-if [ $(pickup_word "$DATA_MC" 'typeId') -ne 0 ] || [ $F_MC -eq 1 ];then
-  echo -e "\033[${COLOR_MC}m""$(echo "$DATA_LOCALE" | grep -A2 minutecastHeader | tr -d '\n' | sed -e s/'Location Name'/${PLACE[2]}/ -e 's/.*://' )"": ""\033[0m"$(pickup_word "$DATA_MC" 'phrase')
+if [ "`echo "$WEATHER_DATA" | grep '<div class="banner-header">'`" ]; then
+TITLE=$(echo "$DATA_MC" | grep -A1 '<div class="banner-header">' | sed -n 2p)
+PHRASE=$(echo "$DATA_MC" | grep -A1 '<div class="banner-text">' | sed -n 2p)
+echo $(printf "\033[0;${COLOR_MC}m")"$TITLE:$(printf "\033[0m") $PHRASE"
 fi
-# Warningを取得して表示
-if [ "`echo $DATA_WN | grep content`" ]; then
-pickup_multi_words "$DATA_WN" 'content' | sed -E 's/^/'$(printf "\033[0;${COLOR_WN}m")'/' | sed -E 's/$/'$(printf "\033[0m")'/'
+# Warningを表示
+if [ "`echo "$WEATHER_DATA" | grep '<div class="alert-banner alert-banner-weather">'`" ]; then
+echo "$DATA_WN" | sed -E 's/^/'$(printf "\033[0;${COLOR_WN}m")'/' | sed -E 's/$/'$(printf "\033[0m")'/'
 fi
