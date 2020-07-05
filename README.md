@@ -3,12 +3,17 @@
 `w_hour` 時間単位の天気予報を表示  
 `w_week` 週間天気予報を表示  
 
+# 事前準備
+
+まず https://www.accuweather.com/en/jp/japan-weather にアクセスし、自分が表示したい地域を検索してそのURLを保存しておく。日本語表示にしたい場合は/en/を/ja/に変更する。  
+続いて、使用しているシェルの環境変数として~/.zshrcや~/.bashrcなどに以下のように記述する。https:〜の部分は、先ほど保存しておいたURLを記載する。
+
+`export WEATHER_URL='https://www.accuweather.com/en/jp/koto-ku/221230/weather-forecast/221230'`
+
 # インストール
 
 $ `brew tap leopard-gecko/weather`  
-$ `brew install weather --URL=https://www.accuweather.com/en/jp/koto-ku/221230/weather-forecast/221230`  
-
-(まず https://www.accuweather.com/en/jp/japan-weather にアクセスし、自分が表示したい地域を検索して「--URL=」以降を適宜変更する。日本語表示にしたい場合は/en/を/ja/に変更する。)
+$ `brew install weather`  
 
 # 各コマンドの使い方:
 `w_now [-s | -c | -d | -n | -t | -h] [-l 言語]`  
