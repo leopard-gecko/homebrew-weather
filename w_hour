@@ -57,12 +57,12 @@ pickup_data() { echo "$1" | grep -m1 $2 | tr '{|}' '\n' | perl -pe 's/,"/\n/g' |
 USER_AGENT='Mozilla/5.0 (Macintosh; Intel Mac OS X)'
 WEATHER_DATA0=$(curl -A "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/hourly-weather-forecast})
 WEATHER_DATA1=$(curl -A "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/hourly-weather-forecast}"?day=2")
-LOCALE_PRECIP=$(echo "$WEATHER_DATA0" | grep -m2 -A1 '<div class="precip">' | grep -v '<div class="precip">' | grep -v '\-\-' | tr -d '\t' | perl -C -MEncode -pe 's/&#x([0-9A-F]{2,4});/chr(hex($1))/ge')
+LOCALE_PRECIP="💧"
 
 # 指定された時間分の時刻を取得（後で配列変数として使う。以下同様）
 _IFS="$IFS";IFS=$'\n'
-HOUR_TIME=($(echo "$WEATHER_DATA0" "$WEATHER_DATA1" | grep -A1 '<div class="date">' | grep '<p>' | sed -e 's/<p>//g' -e 's/<\/p>//g' | tr -d '\t' | perl -C -MEncode -pe 's/&#x([0-9A-F]{2,4});/chr(hex($1))/ge' | sed -n $(expr 1 + $AFTER),$(expr $NUM_HOUR + $AFTER)p))
-HOUR_DATE=($(echo "$WEATHER_DATA0" "$WEATHER_DATA1" | grep -A1 '<p class="sub">' | grep -v '<p class="sub">' | grep -v '\-\-' | tr -d '\t' | sed -n $(expr 1 + $AFTER),$(expr $NUM_HOUR + $AFTER)p))
+HOUR_TIME=($(echo "$WEATHER_DATA0" "$WEATHER_DATA1" | grep -A1 'class="date"' | grep '<span>' | sed -e 's/<span>//g' -e 's/<\/span>//g' | tr -d '\t' | perl -C -MEncode -pe 's/&#x([0-9A-F]{2,4});/chr(hex($1))/ge' | sed -n $(expr 1 + $AFTER),$(expr $NUM_HOUR + $AFTER)p))
+HOUR_DATE=($(echo "$WEATHER_DATA0" "$WEATHER_DATA1" | grep -A1 '<span class="sub">' | grep -v '<span class="sub">' | grep -v '\-\-' | tr -d '\t' | sed -n $(expr 1 + $AFTER),$(expr $NUM_HOUR + $AFTER)p))
 IFS="$_IFS"
 
 # 指定された時間分のデータを取得
