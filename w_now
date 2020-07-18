@@ -14,16 +14,14 @@ COLOR_WN='31' # 気象警報
 function usage() {
 cat <<_EOT_
 使い方:
-  ${0##*/} [-c | -d | -n | -t | -h] [-l 言語]
+  ${0##*/} [-c | -d | -h] [-l 言語]
 
 説明:
   現在の天気予報
 
 オプション:
-  -c    現在の天気を表示       （Current）
-  -d    日中の天気を表示       （Day）
-  -n    夜間の天気を表示       （Night）
-  -t    明日の天気を表示       （Tomorrow）
+  -c    現在の天気を表示         （Current）
+  -d    日中・夜間・明日の天気を表示 （Day）
   -h    ヘルプ
   -l    表示言語
         （ja:日本語、en:English、fr:Français、de:Deutsch、zh-cn:中文 (SIM)など）
@@ -38,8 +36,6 @@ do
   case $OPT in
     c) FLG_C='true' ;;
     d) FLG_D='true' ;;
-    n) FLG_N='true' ;;
-    t) FLG_T='true' ;;
     h) usage; exit 1 ;;
     l) LN=$(echo $WEATHER_URL | awk -F'www.accuweather.com' '{print $2}' | awk -F/ '{print $2}')
        WEATHER_URL=${WEATHER_URL/\/$LN\//\/"$OPTARG"\/} ;;
@@ -47,8 +43,8 @@ do
   esac
 done
 
-if [ "$FLG_C" != 'true' ] && [ "$FLG_D" != 'true' ] && [ "$FLG_N" != 'true' ] && [ "$FLG_T" != 'true' ]; then
-  FLG_C='true'; FLG_D='true'; FLG_N='true'; FLG_T='true'
+if [ "$FLG_C" != 'true' ] && [ "$FLG_D" != 'true' ]; then
+  FLG_C='true'; FLG_D='true'
 fi
 
 # データ整理用関数
@@ -58,43 +54,36 @@ pickup_data() { echo "$1" | grep -m1 $2 | tr '{|}' '\n' | perl -pe 's/,"/\n/g' |
 USER_AGENT='Mozilla/5.0 (Macintosh; Intel Mac OS X)'
 WEATHER_DATA=$(curl -A "$USER_AGENT" --silent $WEATHER_URL)
 WEATHER_HOUR=$(curl -A "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/hourly-weather-forecast})
-WEATHER_TODAY=$(curl -A "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/current-weather})
-WEATHER_TOMORROW=$(curl -A "$USER_AGENT" --silent "${WEATHER_URL/weather-forecast/daily-weather-forecast}?day=2")
 DATA_NOW="$(echo "$WEATHER_DATA" | awk '/glacier-ad top content-module/,/connatix/' | tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }')"
+_IFS="$IFS";IFS='^' 
+DATA_D=($(echo "$WEATHER_DATA" | grep -A17 'card weather-card' | tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }' | sed s/--/^/g))
+DATA_WN_RAW=($(echo "$WEATHER_HOUR" | grep -A27 'hourly-alerts-container' | tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }' | sed s/--/^/g))
+DATA_WN=$(echo "${DATA_WN_RAW[0]}" | grep -A1 'alert-description' | perl -pe 's/--\n//g')
+IFS="$_IFS"
 DATA_MC=$(echo "$WEATHER_DATA" | grep -A7 'minutecast-banner' | tr -d '\t')
-DATA_WN=$(echo "$WEATHER_DATA" | grep -A3 '<div class="alert-banner alert-banner-weather">' | grep '<span>' | sed 's/<[^>]*>//g' | tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }')
 
 # 各データ取得
 _IFS="$IFS";IFS=$'\n'
-TITLE=($(echo "$WEATHER_TODAY" | grep -A1 'module-header title' | grep -v 'module-header title' |  tr -d '\t'  | perl -pe 's/--\n//g' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }';))
-TITLE_TOMORROW=$(echo "$WEATHER_DATA" | grep -A2 '?day=2' | grep -A1 'card-header' | grep -v 'card-header' | sed -e 's/<[^>]*>//g' | tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }';)
-TEMP_HI=($(echo "$WEATHER_TODAY" | grep -A2 '<div class="temperatures">' | grep 'span class' | sed -e 's/<[^>]*>//g' |  tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }';))
-TEMP_C=$(echo "$DATA_NOW" | grep -m1 '<div class="temp">' | sed -e 's/<[^>]*>//g' |  tr -d '\t')
-TEMP_T=($(echo "$WEATHER_TOMORROW" | grep -A2 '<div class="temperatures">' | grep 'span class' | sed -e 's/<[^>]*>//g' |  tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }';))
-PHRASE_C=$(echo "$DATA_NOW" | grep '<span class="phrase">' | sed -e 's/<[^>]*>//g' |  tr -d '\t')
-PHRASE_T=$(echo "$WEATHER_TOMORROW" | grep -m1 '<div class="phrase">' | sed -e 's/<[^>]*>//g' |  tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }';)
-PHRASE=($(echo "$WEATHER_TODAY" | grep '<div class="phrase">' | sed -e 's/<[^>]*>//g' |  tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }';))
+TITLE_C=$(echo "$DATA_NOW" | grep -A1 'card__title' | grep -v 'card__title')
+TITLE_D=($(echo "${DATA_D[@]}" | grep -A1 'card-header' | grep -v 'card-header' | sed -e 's/<[^>]*>//g' | perl -pe 's/--\n//g'))
+TEMP_C=$(echo "$DATA_NOW" | grep -m1 '<div class="temp">' | sed -e 's/<[^>]*>//g')
+TEMP_D=($(echo "${DATA_D[@]}" | grep 'class="temp"' | sed -e 's/<[^>]*>//g'))
+PHRASE_C=$(echo "$DATA_NOW" | grep '<span class="phrase">' | sed -e 's/<[^>]*>//g')
+PHRASE_D=($(echo "${DATA_D[@]}" | grep 'class="phrase"' | sed -e 's/<[^>]*>//g'))
 IFS="$_IFS"
 
 # 現在の温度と天気を取得
 if [ "$FLG_C" = 'true' ]; then
-  COLUMN="$(echo -e -n "\033[${COLOR_CP}m"$(echo "${TITLE[0]}")"\033[0m:")""@"
-  COLUMN="${COLUMN}$(echo -e $(echo ${TEMP_HI[0]})@"\033[${COLOR_WE}m"$(echo ${PHRASE[0]})"\033[0m")""\n"
+  COLUMN="$(echo -e -n "\033[${COLOR_CP}m"$(echo "$TITLE_C")"\033[0m:")""@"
+  COLUMN="${COLUMN}$(echo -e $(echo $TEMP_C)@"\033[${COLOR_WE}m"$(echo $PHRASE_C)"\033[0m")""\n"
 fi
-# 日中の最高気温、天気を取得
+# 日中・夜間・明日の最高気温、天気を取得
 if [ "$FLG_D" = 'true' ]; then
-  COLUMN="${COLUMN}$(echo -e -n "\033[${COLOR_CP}m""$(echo "${TITLE[1]}")""\033[0m: ")""@"
-  COLUMN="${COLUMN}$(echo -e $(echo ${TEMP_HI[1]})@"\033[${COLOR_WE}m"$(echo ${PHRASE[1]})"\033[0m")""\n"
-fi
-# 夜間の最低気温、天気を取得
-if [ "$FLG_N" = 'true' ]; then
-  COLUMN="${COLUMN}$(echo -e -n "\033[${COLOR_CP}m""$(echo "${TITLE[2]}")""\033[0m: ")""@"
-  COLUMN="${COLUMN}$(echo -e $(echo ${TEMP_HI[2]})@"\033[${COLOR_WE}m"$(echo ${PHRASE[2]})"\033[0m")""\n"
-fi
-# 明日の最高・最低気温、天気を取得
-if [ "$FLG_T" = 'true' ]; then
-  COLUMN="${COLUMN}$(echo -e -n "\033[${COLOR_CP}m""$(echo "$TITLE_TOMORROW")""\033[0m: ")""@"
-  COLUMN="${COLUMN}$(echo -e $(echo ${TEMP_T[0]} ${TEMP_T[1]})@"\033[${COLOR_WE}m"$(echo $PHRASE_T)"\033[0m")""\n"
+  for (( i = 0; i < ${#DATA_D[@]}; ++i ))
+  do
+    COLUMN="${COLUMN}$(echo -e -n "\033[${COLOR_CP}m""$(echo "${TITLE_D[i]}")""\033[0m: ")""@"
+    COLUMN="${COLUMN}$(echo -e $(echo ${TEMP_D[i]})@"\033[${COLOR_WE}m"$(echo ${PHRASE_D[i]})"\033[0m")""\n"
+  done
 fi
 
 # 地名を表示
@@ -103,13 +92,10 @@ echo ${PLACE[2]}, ${PLACE[0]}
 # 各データを表として表示
 echo -e "$COLUMN" | column -t -s"@"
 
-# MINUTECASTを表示
-if [ "`echo "$WEATHER_DATA" | grep '<div class="banner-header">'`" ]; then
-TITLE=$(echo "$DATA_MC" | grep -A1 '<div class="banner-header">' | sed -n 2p)
-PHRASE=$(echo "$DATA_MC" | grep -A1 '<div class="banner-text">' | sed -n 2p)
-echo $(printf "\033[0;${COLOR_MC}m")"$TITLE:$(printf "\033[0m") $PHRASE"
-fi
+# MINUTECASTを取得して表示
+TITLE_MC=$(echo "$DATA_MC" | grep -A1 'banner-header' | sed -n 2p)
+PHRASE_MC=$(echo "$DATA_MC" | grep -A1 'banner-text' | sed -n 2p)
+[ -n "$TITLE_MC" ] && echo $(printf "\033[0;${COLOR_CP}m")"$TITLE_MC:$(printf "\033[0m") $PHRASE_MC"
+
 # Warningを表示
-if [ "`echo "$WEATHER_DATA" | grep '<div class="alert-banner alert-banner-weather">'`" ]; then
-echo "$DATA_WN" | sed -E 's/^/'$(printf "\033[0;${COLOR_WN}m")'/' | sed -E 's/$/'$(printf "\033[0m")'/'
-fi
+[ -n "$DATA_WN" ] && echo "$DATA_WN" | sed -e 's/<[^>]*>//g' | sed -E 's/^/'$(printf "\033[0;${COLOR_WN}m")'/' | sed -E 's/$/'$(printf "\033[0m")'/'
