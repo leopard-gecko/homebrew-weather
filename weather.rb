@@ -1,6 +1,6 @@
 class Weather <Formula
 
-  HOMEBREW_WEATHER_VERSION="1.1.0"
+  HOMEBREW_WEATHER_VERSION="1.1.1"
   
   url "https://github.com/leopard-gecko/homebrew-weather/releases/download/#{HOMEBREW_WEATHER_VERSION}/weather.zip"
   sha256 "a4343b439f7fe05448142afac5f20dbfdf48e33c1863283460a50b5dc3148c00"

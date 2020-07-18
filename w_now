@@ -47,30 +47,29 @@ if [ "$FLG_C" != 'true' ] && [ "$FLG_D" != 'true' ]; then
   FLG_C='true'; FLG_D='true'
 fi
 
-# データ整理用関数
-pickup_data() { echo "$1" | grep -m1 $2 | tr '{|}' '\n' | perl -pe 's/,"/\n/g' | tr -d '"'; }
-
 # 元データ取得
 USER_AGENT='Mozilla/5.0 (Macintosh; Intel Mac OS X)'
 WEATHER_DATA=$(curl -A "$USER_AGENT" --silent $WEATHER_URL)
 WEATHER_HOUR=$(curl -A "$USER_AGENT" --silent ${WEATHER_URL/weather-forecast/hourly-weather-forecast})
-DATA_NOW="$(echo "$WEATHER_DATA" | awk '/glacier-ad top content-module/,/connatix/' | tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }')"
+DATA_C="$(echo "$WEATHER_DATA" | awk '/glacier-ad top content-module/,/connatix/' | tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }')"
 _IFS="$IFS";IFS='^' 
 DATA_D=($(echo "$WEATHER_DATA" | grep -A17 'card weather-card' | tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }' | sed s/--/^/g))
 DATA_WN_RAW=($(echo "$WEATHER_HOUR" | grep -A27 'hourly-alerts-container' | tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }' | sed s/--/^/g))
-DATA_WN=$(echo "${DATA_WN_RAW[0]}" | grep -A1 'alert-description' | perl -pe 's/--\n//g')
 IFS="$_IFS"
+DATA_WN=$(echo "${DATA_WN_RAW[0]}" | grep -A1 'alert-description' | perl -pe 's/--\n//g')
 DATA_MC=$(echo "$WEATHER_DATA" | grep -A7 'minutecast-banner' | tr -d '\t')
 
 # 各データ取得
+TITLE_C=$(echo "$DATA_C" | grep -A1 'card__title' | grep -v 'card__title')
+TEMP_C=$(echo "$DATA_C" | grep -m1 '<div class="temp">' | sed -e 's/<[^>]*>//g')
+PHRASE_C=$(echo "$DATA_C" | grep '<span class="phrase">' | sed -e 's/<[^>]*>//g')
 _IFS="$IFS";IFS=$'\n'
-TITLE_C=$(echo "$DATA_NOW" | grep -A1 'card__title' | grep -v 'card__title')
 TITLE_D=($(echo "${DATA_D[@]}" | grep -A1 'card-header' | grep -v 'card-header' | sed -e 's/<[^>]*>//g' | perl -pe 's/--\n//g'))
-TEMP_C=$(echo "$DATA_NOW" | grep -m1 '<div class="temp">' | sed -e 's/<[^>]*>//g')
 TEMP_D=($(echo "${DATA_D[@]}" | grep 'class="temp"' | sed -e 's/<[^>]*>//g'))
-PHRASE_C=$(echo "$DATA_NOW" | grep '<span class="phrase">' | sed -e 's/<[^>]*>//g')
 PHRASE_D=($(echo "${DATA_D[@]}" | grep 'class="phrase"' | sed -e 's/<[^>]*>//g'))
 IFS="$_IFS"
+TITLE_MC=$(echo "$DATA_MC" | grep -A1 'banner-header' | sed -n 2p)
+PHRASE_MC=$(echo "$DATA_MC" | grep -A1 'banner-text' | sed -n 2p)
 
 # 現在の温度と天気を取得
 if [ "$FLG_C" = 'true' ]; then
@@ -87,14 +86,12 @@ if [ "$FLG_D" = 'true' ]; then
 fi
 
 # 地名を表示
-PLACE=($(pickup_data "$WEATHER_DATA" 'currentLocation' | grep localizedName | awk -F: '{print $2}'))
-echo ${PLACE[2]}, ${PLACE[0]}
+echo "$WEATHER_DATA" | grep '"header-loc"' | sed -e 's/<[^>]*>//g' | tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }'
+
 # 各データを表として表示
 echo -e "$COLUMN" | column -t -s"@"
 
-# MINUTECASTを取得して表示
-TITLE_MC=$(echo "$DATA_MC" | grep -A1 'banner-header' | sed -n 2p)
-PHRASE_MC=$(echo "$DATA_MC" | grep -A1 'banner-text' | sed -n 2p)
+# MINUTECASTを表示
 [ -n "$TITLE_MC" ] && echo $(printf "\033[0;${COLOR_CP}m")"$TITLE_MC:$(printf "\033[0m") $PHRASE_MC"
 
 # Warningを表示

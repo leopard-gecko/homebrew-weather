@@ -68,8 +68,8 @@ LOCALE_SUN=$(echo "$DATA_WEEK_RAW" | grep -A4 "?day=$(expr 7 - $(date +%w) + 1)\
 LOCALE_PRECIP='💧'
 
 # 地名を表示
-PLACE=($(pickup_data "$WEATHER_DATA" 'currentLocation' | grep localizedName | awk -F: '{print $2}'))
-echo ${PLACE[2]}, ${PLACE[0]}
+echo "$WEATHER_DATA" | grep '"header-loc"' | sed -e 's/<[^>]*>//g' | tr -d '\t' | ruby -pe 'gsub(/&#[xX]([0-9a-fA-F]+);/) { [$1.to_i(16)].pack("U") }'
+
 # 日付、曜日、最高・最低気温、降水確率、天気を表示
 for (( i = 0; i < $NUM_L; ++i ))
 do
